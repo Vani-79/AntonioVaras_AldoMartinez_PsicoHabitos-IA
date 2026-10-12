@@ -7,34 +7,34 @@
 [![React Native / Expo](https://img.shields.io/badge/Expo-SDK%2057%20(React%2019)-blue.svg)](https://expo.dev/)
 [![MySQL](https://img.shields.io/badge/Database-MySQL%208.0-orange.svg)](https://www.mysql.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
-[![Security & Health](https://img.shields.io/badge/Normativa-Ley%2021.719%20Chile-red.svg)](#-cumplimiento-normativo-y-seguridad-cl%C3%ADnica)
+[![Security & Health](https://img.shields.io/badge/Normativa-Ley%2021.719%20Chile-red.svg)](#cumplimiento-normativo-y-seguridad-clínica)
 
 ---
 
-## 📋 Índice
-1. [Descripción del Proyecto](#-descripción-del-proyecto)
+## Índice
+1. [Descripción del Proyecto](#descripción-del-proyecto)
    - [¿Qué hace?](#qué-hace)
    - [¿A quién va dirigido?](#a-quién-va-dirigido)
    - [¿Qué problema resuelve? Contexto y Estadísticas](#qué-problema-resuelve-contexto-y-estadísticas)
    - [Solución Propuesta](#solución-propuesta)
-2. [Tecnologías Utilizadas](#-tecnologías-utilizadas)
-3. [Arquitectura de la Solución](#-arquitectura-de-la-solución)
+2. [Tecnologías Utilizadas](#tecnologías-utilizadas)
+3. [Arquitectura de la Solución](#arquitectura-de-la-solución)
    - [Descripción de la Arquitectura](#descripción-de-la-arquitectura)
    - [Diagrama de Arquitectura](#diagrama-de-arquitectura)
-4. [Instrucciones de Instalación y Ejecución Local](#-instrucciones-de-instalación-y-ejecución-local)
+4. [Instrucciones de Instalación y Ejecución Local](#instrucciones-de-instalación-y-ejecución-local)
    - [Prerrequisitos](#prerrequisitos)
    - [Paso 1: Clonar el Repositorio](#paso-1-clonar-el-repositorio)
    - [Paso 2: Base de Datos MySQL 8.0](#paso-2-base-de-datos-mysql-80)
    - [Paso 3: Configuración del BackEnd y Variables de Entorno (.env)](#paso-3-configuración-del-backend-y-variables-de-entorno-env)
-   - [Paso 4: Configuración y Ejecución del FrontEnd (Mobile & Web)](#paso-4-configuración-y-ejecución-del-frontend-mobile--web)
+   - [Paso 4: Configuración y Ejecución del FrontEnd](#paso-4-configuración-y-ejecución-del-frontend)
    - [Paso 5: Aprovisionar Especialista de Prueba](#paso-5-aprovisionar-especialista-de-prueba)
-5. [Integrantes del Equipo y Roles](#-integrantes-del-equipo-y-roles)
-6. [Metodología de Trabajo](#-metodología-de-trabajo)
-7. [Cumplimiento Normativo y Seguridad Clínica](#-cumplimiento-normativo-y-seguridad-clínica)
+5. [Integrantes del Equipo y Roles](#integrantes-del-equipo-y-roles)
+6. [Metodología de Trabajo](#metodología-de-trabajo)
+7. [Cumplimiento Normativo y Seguridad Clínica](#cumplimiento-normativo-y-seguridad-clínica)
 
 ---
 
-## 📖 Descripción del Proyecto
+## Descripción del Proyecto
 
 ### ¿Qué hace?
 **PsicoHábitos** es un ecosistema digital compuesto por una aplicación móvil (React Native / Expo) y una API REST robusta (Node.js / Express con MySQL 8.0) diseñada para transformar la psicoterapia tradicional en un proceso activo, continuo y respaldado por evidencia diaria. 
@@ -81,7 +81,7 @@ El proceso psicoterapéutico profesional consta de 5 fases estructuradas:
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
 | Capa / Dominio | Tecnología / Herramienta | Propósito en el Proyecto |
 | :--- | :--- | :--- |
@@ -99,7 +99,7 @@ El proceso psicoterapéutico profesional consta de 5 fases estructuradas:
 
 ---
 
-## 🏗️ Arquitectura de la Solución
+## Arquitectura de la Solución
 
 ### Descripción de la Arquitectura
 La solución implementa una **Arquitectura en Capas Desacopladas (Clean Architecture / 3 Capas)**:
@@ -113,7 +113,7 @@ La solución implementa una **Arquitectura en Capas Desacopladas (Clean Architec
 ### Diagrama de Arquitectura
 
 <p align="center">
-  <img src="Arquitectura Tecnológica.png" alt="Arquitectura de la Solución - PsicoHábitos" width="100%"/>
+  <img src="arquitectura.png" alt="Arquitectura de la Solución - PsicoHábitos" width="100%"/>
 </p>
 
 <details>
@@ -176,7 +176,7 @@ flowchart TD
 
 ---
 
-## 🚀 Instrucciones de Instalación y Ejecución Local
+## Instrucciones de Instalación y Ejecución Local
 
 ### Prerrequisitos
 * **Node.js** v18 o v20 LTS instalado ([Descargar Node.js](https://nodejs.org/)).
@@ -280,7 +280,7 @@ Verás en consola:
 
 ---
 
-### Paso 4: Configuración y Ejecución del FrontEnd (Mobile & Web)
+### Paso 4: Configuración y Ejecución del FrontEnd
 
 Abre una nueva terminal, ve a la carpeta del frontend e instala dependencias:
 
@@ -317,7 +317,7 @@ node scripts/register-psychologist.js "Claudia" "Rojas Mery" "claudia.rojas@gmai
 
 ---
 
-## 👥 Integrantes del Equipo y Roles
+## Integrantes del Equipo y Roles
 
 | Integrante | Rol en el Proyecto | Responsabilidades Principales |
 | :--- | :--- | :--- |
@@ -326,7 +326,7 @@ node scripts/register-psychologist.js "Claudia" "Rojas Mery" "claudia.rojas@gmai
 
 ---
 
-## 🔄 Metodología de Trabajo
+## Metodología de Trabajo
 
 El equipo adoptó el marco de trabajo ágil **Scrum**, adaptándolo a un ciclo iterativo de entregas continuas:
 
@@ -342,7 +342,7 @@ El equipo adoptó el marco de trabajo ágil **Scrum**, adaptándolo a un ciclo i
 
 ---
 
-## 🛡️ Cumplimiento Normativo y Seguridad Clínica
+## Cumplimiento Normativo y Seguridad Clínica
 
 El desarrollo de PsicoHábitos contempla altos estándares de protección de información sensible en salud:
 
