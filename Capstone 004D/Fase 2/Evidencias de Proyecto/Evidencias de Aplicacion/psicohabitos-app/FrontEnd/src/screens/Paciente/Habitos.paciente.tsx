@@ -24,39 +24,91 @@ import {
   INITIAL_HABITS_STATE,
   getRatingLabel,
 } from '../../constants/habits';
-import { PatientBottomNav, PatientTab } from '../../components/PatientBottomNav';
-import { formatToMySqlDate, formatToMySqlDateTime, formatToChileanDate } from '../../utils/date';
-import { habitService } from '../../services';
+import { PatientBottomNav, PatientTab } from '../../components/Iconosbarrapaciente';
+import { formatToChileanDate, formatToMySqlDate, formatToMySqlDateTime, } from '../../utils/date';
+import { habitService, habitNotificationService } from '../../services';
 import { s, vs, ms } from '../../utils/responsive';
 
 interface DailyCheckInScreenProps {
-  onBack?: () => void;
   onSaveRecord?: (record: MySqlDailyHabitRecord) => void;
   userName?: string;
   userEmail?: string;
   onNavigateTab?: (tab: PatientTab) => void;
 }
 
-const HABIT_CARD_COLORS: Record<HabitKey, string> = {
-  comida: '#FFF1D8',
-  ejercicio: '#E7F8E5',
-  hidratacion: '#DFF7FF',
-  ansiedad: '#FDE2E4',
-  sueno: '#F0E7FF',
-  estres: '#E3F0FF',
-};
+// Paleta de la pantalla, agrupada por propósito para mantener sus tonos consistentes.
+const COLORS = {
+  // Marca y superficies
+  primary: '#0F613B',
+  screenBackground: '#EAF5EE',
+  surface: '#FFFFFF',
+  surfaceSubtle: '#F8FAFC',
 
-const HABIT_CARD_BORDER_COLORS: Record<HabitKey, string> = {
-  comida: '#E3A72F',
-  ejercicio: '#4A9F45',
-  hidratacion: '#2596B5',
-  ansiedad: '#D97786',
-  sueno: '#8962B8',
-  estres: '#4B83C4',
+  // Texto
+  textHeading: '#4d5566',
+  textQuestion: '#4d5566',
+  textPrimary: '#4d5566',
+  textSecondary: '#6B7280',
+  textSubdued: '#475569',
+  textMuted: '#64748B',
+  textDisabled: '#9ca3af',
+
+  // Bordes y separadores
+  border: '#E9EEF0',
+  borderSoft: '#D9ECDC',
+  disabledBorder: '#E1E5E9',
+  slateBorder: '#CBD5E1',
+
+  // Estados y acciones
+  greenPrimary: '#0F613B',
+  greenAction: '#347e5b9e', // Boton guardar en habitos 
+  greenSuccess: '#67bd8e',
+  greenSoft: '#e2f5e498',
+  greenBorder: '#87989660', //Borde imagen en guardar habitos
+  greenBadge: '#D1FAE5',
+  greenOutline: '#A7F3D0',
+  disabledBackground: '#e1eee6', //fondo boton registrar
+  registerButton: '#347e5be7', //registrar habitos boton 
+
+  // Colores de las tarjetas por hábito
+  habitComidaBackground: '#fff1d8',
+  habitEjercicioBackground: '#E7F8E5',
+  habitHidratacionBackground: '#DFF7FF',
+  habitAnsiedadBackground: '#FDE2E4',
+  habitSuenoBackground: '#F0E7FF',
+  habitEstresBackground: '#E3F0FF',
+
+  // Controles de hidratación
+  blueSoft: '#ffffff',
+  blueBorder: '#3e445248',
+  blueInputBorder: '#3e445248',
+  blueText: '#6B7280',
+  waterAction: '#3e4452',
+  waterUnit: '#6B7280',
+
+  // Escala y modal
+  ratingLabel: '#9ca3af',
+  ratingLabelActive: '#334155',
+  
+  sleepControlBackground: '#F1F5F9',
+  sleepUnit: '#64748B',
+  dividerSoft: '#F1F5F9',
+  closeIcon: '#888',
+  overlay: 'rgba(0, 0, 0, 0.45)',
+  white: '#FFFFFF',
+} as const;
+
+// Vincula cada hábito con los tonos definidos en la paleta.
+const HABIT_CARD_COLORS: Record<HabitKey, string> = {
+  comida: COLORS.habitComidaBackground,
+  ejercicio: COLORS.habitEjercicioBackground,
+  hidratacion: COLORS.habitHidratacionBackground,
+  ansiedad: COLORS.habitAnsiedadBackground,
+  sueno: COLORS.habitSuenoBackground,
+  estres: COLORS.habitEstresBackground,
 };
 
 export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
-  onBack,
   onSaveRecord,
   userName = 'Carlos',
   userEmail,
@@ -97,8 +149,10 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
       if (status.serverDate) setServerDate(status.serverDate);
 
       if (status.completedToday && status.record) {
+        // Activar bloqueo y confirmación si ya completó el día
         setIsLockedToday(true);
         setIsConfirmed(true);
+        void habitNotificationService.onHabitsCompletedToday(status.serverDate);
         setHabits({
           comida: status.record.comida ?? null,
           ejercicio: status.record.ejercicio ?? null,
@@ -109,8 +163,10 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
           estres: status.record.estres ?? null,
         });
       } else {
+        // Si no ha registrado hoy, mantener desbloqueado y programar recordatorios
         setIsLockedToday(false);
         setIsConfirmed(false);
+        void habitNotificationService.syncHabitReminders(targetUser, 'paciente');
       }
     }
 
@@ -250,6 +306,8 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
       }
       setIsConfirmed(true);
       setIsLockedToday(true);
+      // Cancela inmediatamente todos los recordatorios restantes del día (20:00, 21:00, 22:00, etc.)
+      void habitNotificationService.onHabitsCompletedToday(recordDate);
       Alert.alert(
         '¡Hábitos Registrados!',
         'Tus hábitos del día han sido guardados exitosamente. Podrás volver a registrar a partir de mañana.',
@@ -260,12 +318,13 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
       if (response.isLocked) {
         setIsLockedToday(true);
         setIsConfirmed(true);
+        void habitNotificationService.onHabitsCompletedToday(recordDate);
       }
     }
   };
 
   const renderRatingSection = () => (
-    <View style={{ width: '100%', alignItems: 'center' }}>
+    <View style={styles.ratingSection}>
       <View style={styles.segmentedControl}>
         <Animated.View
           style={[
@@ -326,7 +385,7 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
               }}
               activeOpacity={0.7}
             >
-              <Ionicons name="remove" size={26} color="#2563EB" />
+              <Ionicons name="remove" size={26} color={COLORS.waterAction} />
             </TouchableOpacity>
 
             <View style={styles.waterInputBox}>
@@ -354,12 +413,12 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
               }}
               activeOpacity={0.7}
             >
-              <Ionicons name="add" size={26} color="#2563EB" />
+              <Ionicons name="add" size={26} color={COLORS.waterAction} />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity
-            style={styles.waterSaveButton}
+            style={styles.registerButton}
             onPress={saveHabitResponse}
             activeOpacity={0.8}
           >
@@ -372,7 +431,7 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
     if (activeHabit === 'sueno') {
       return (
         <View style={styles.sleepSection}>
-          <Text style={styles.sectionSubtitle}>Horas dormidas anoche:</Text>
+          <Text style={styles.sectionSubtitle}>Horas dormidas:</Text>
           <View style={styles.sleepCounterRow}>
             <TouchableOpacity
               style={styles.sleepStepBtn}
@@ -383,7 +442,7 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
               }}
               activeOpacity={0.7}
             >
-              <Ionicons name="remove" size={22} color="#1E293B" />
+              <Ionicons name="remove" size={22} color={COLORS.textHeading} />
             </TouchableOpacity>
 
             <View style={styles.sleepInputBox}>
@@ -411,17 +470,27 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
               }}
               activeOpacity={0.7}
             >
-              <Ionicons name="add" size={22} color="#1E293B" />
+              <Ionicons name="add" size={22} color={COLORS.textHeading} />
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.sectionSubtitle, { marginTop: 14 }]}>Calidad de descanso:</Text>
+          <Text style={[styles.sectionSubtitle, styles.sleepQualitySubtitle]}>Calidad de descanso:</Text>
           {renderRatingSection()}
         </View>
       );
     }
 
     return renderRatingSection();
+  };
+
+  const getSectionSubText = () => {
+    if (isLockedToday) {
+      return 'Registro completado por hoy';
+    }
+    if (registeredCount < 6) {
+      return `Te faltan ${6 - registeredCount} por completar`;
+    }
+    return 'Todos los hábitos evaluados';
   };
 
   return (
@@ -431,8 +500,8 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
           <RefreshControl
             refreshing={isLoadingStatus}
             onRefresh={loadTodayStatus}
-            colors={['#64748B']}
-            tintColor="#64748B"
+            colors={[COLORS.textMuted]}
+            tintColor={COLORS.textMuted}
           />
         }
         contentContainerStyle={[
@@ -440,188 +509,193 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
           { paddingBottom: Math.max(insets.bottom + 85, 110) },
         ]}
       >
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <View style={styles.greetingRow}>
-              <View>
-                <Text style={styles.greeting}>Hola, {userName}!</Text>
-                <Text style={styles.welcomeText}>Qué bueno verte hoy</Text>
-              </View>
+        <View style={styles.headerSpacer}>
+          <View style={styles.headerRow}>
+            <View>
+              <Text style={styles.greeting}>Hola, {userName}!</Text>
+              <Text style={styles.subGreeting}>Comienza tus hábitos de hoy</Text>
             </View>
+            {__DEV__ && (
+              <TouchableOpacity
+                style={styles.testNotificationPill}
+                onPress={async () => {
+                  await habitNotificationService.sendTestNotificationNow(3);
+                  Alert.alert(
+                    'Recordatorio en camino 🔔',
+                    'Te llegará una notificación nativa en 3 segundos. Puedes minimizar la app o dejarla en pantalla para verla llegar.',
+                    [{ text: '¡Genial!' }]
+                  );
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="notifications-outline" size={ms(14)} color={COLORS.primary} />
+                <Text style={styles.testNotificationPillText}>Probar aviso (3s)</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
         {isLoadingStatus && (
-          <View style={{ paddingVertical: 1, alignItems: 'center' }}>
-            <ActivityIndicator size="small" color="#0F613B" />
+          <View style={styles.loadingStatus}>
+            <ActivityIndicator size="small" color={COLORS.primary} />
           </View>
         )}
 
-        {/* Tarjeta grande: progreso + cuadrícula de hábitos */}
-        <View style={styles.grid}>
-          <View style={styles.progressCard}>
-            <Text style={styles.progressNumber}>{registeredCount}/6</Text>
-            <Text style={styles.progressEmoji}>🌱</Text>
-            <View style={styles.progressTextGroup}>
-              <Text style={styles.progressText}>
-                {isLockedToday ? 'Hábitos completados hoy' : 'Hábitos evaluados'}
-              </Text>
-              {!isLockedToday && registeredCount < 6 && (
-                <Text style={styles.progressHelpText}>
-                  Te faltan {6 - registeredCount} por completar
-                </Text>
-              )}
-            </View>
-          </View>
-          {HABIT_KEYS.map((key) => {
-            const item = HABIT_CATALOG[key];
-            const currentVal = habits[key];
-
-            let labelText = item.label;
-            if (key === 'hidratacion' && currentVal !== null) {
-              labelText = currentVal === 1 ? '1 Litro' : `${currentVal} Litros`;
-            } else if (key === 'sueno' && currentVal !== null) {
-              const qualityLabel = getRatingLabel(currentVal, 'sueno');
-              const hours = habits.sueno_horas;
-              labelText = hours !== null && hours !== undefined ? `${qualityLabel} • ${hours}h` : qualityLabel;
-            } else if (currentVal !== null) {
-              labelText = getRatingLabel(currentVal, key);
-            }
-
-            return (
-              <TouchableOpacity
-                key={key}
-                style={[
-                  styles.card,
-                  { backgroundColor: HABIT_CARD_COLORS[key] },
-                  isLockedToday && styles.cardLocked,
-                  currentVal !== null && {
-                    borderWidth: 2,
-                    borderColor: HABIT_CARD_BORDER_COLORS[key],
-                  },
-                ]}
-                onPress={() => openHabitModal(key)}
-                activeOpacity={isLockedToday ? 0.9 : 0.7}
-              >
-                <View style={styles.imageFrame}>
-                  {item.image ? (
-                    <Image source={item.image} style={styles.cardImage} resizeMode="contain" />
-                  ) : (
-                    <Text style={styles.emoji}>{item.emoji}</Text>
-                  )}
-                  {currentVal !== null && (
-                    <View style={styles.cardCheckBadge}>
-                      <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                    </View>
-                  )}
-                  {isLockedToday && (
-                    <View style={styles.cardLockIconBadge}>
-                      <Ionicons name="lock-closed" size={12} color="#0F613B" />
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.cardTitle}>{item.label}</Text>
-                <Text
-                  style={styles.cardSubtitle}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                >
-                  {currentVal !== null ? labelText : 'Comenzar'}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        
-
-        {/* Sección inferior: Bloqueado vs Botón de Confirmación */}
-        {isLockedToday ? (
-          <View style={styles.lockedBottomContainer}>
-            <View style={styles.lockedBottomBadge}>
-              <Ionicons name="happy-outline" size={18} color="#0F613B" style={styles.lockedBottomHappyIcon} />
-              <Ionicons name="lock-closed" size={16} color="#0F613B" style={{ marginRight: 6 }} />
-              <Text style={styles.lockedBottomBadgeText}>Evaluación completada por hoy</Text>
-            </View>
-            <Text style={styles.lockedBottomHelpText}>
-              Próximo check-in habilitado mañana.
-            </Text>
-          </View>
-        ) : (
-          !isConfirmed && (
-            <View style={styles.confirmationSection}>
-              <TouchableOpacity
-                style={[
-                  styles.globalConfirmButton,
-                  registeredCount < 6 && styles.globalConfirmDisabled,
-                ]}
-                disabled={registeredCount < 6}
-                onPress={handleConfirm}
-                activeOpacity={0.8}
-              >
-                <View style={styles.confirmButtonContent}>
-                  {registeredCount === 6 && (
-                    <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" style={styles.confirmIcon} />
-                  )}
-                  <Text
-                    style={[
-                      styles.globalConfirmText,
-                      registeredCount < 6 && styles.globalConfirmDisabledText,
-                    ]}
-                  >
-                    {registeredCount === 6 ? 'Registrar Hábitos' : 'Registrar'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          )
-        )}
-        </View>
-      </ScrollView>
-
-      {/* Modal de calificación */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setModalVisible(false)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="close" size={22} color="#888" />
-            </TouchableOpacity>
-
-            {activeHabit && (
-              <View
-                style={[
-                  styles.modalIconArea,
-                  activeHabit === 'hidratacion' && styles.waterModalIconArea,
-                ]}
-              >
-                {HABIT_CATALOG[activeHabit].image ? (
-                  <Image
-                    source={HABIT_CATALOG[activeHabit].image}
-                    style={styles.modalHabitImage}
-                    resizeMode="contain"
-                  />
-                ) : (
-                  <Text style={styles.modalEmoji}>{HABIT_CATALOG[activeHabit].emoji}</Text>
-                )}
+        <View style={styles.gridContainer}>
+          {/* Encabezado interno con ícono, título y la badge con el nro de hábitos */}
+          <View style={styles.sectionHeader}>
+            <View style={styles.titleGroup}>
+              <View style={styles.iconBadge}>
+                <Ionicons name="leaf-outline" size={ms(18)} color={COLORS.primary} />
               </View>
-            )}
+              <View>
+                <Text style={styles.sectionTitle}>Hábitos diarios</Text>
+                <Text style={styles.sectionSubText}>
+                  {getSectionSubText()}
+                </Text>
+              </View>
+            </View>
 
-            <Text style={styles.questionText}>
-              {activeHabit ? HABIT_CATALOG[activeHabit].question : '¿Cómo evalúas este concepto hoy?'}
-            </Text>
+            {/* Badge con el nro de hábitos completados */}
+            <View style={[styles.countBadge, isLockedToday && styles.countBadgeSuccess]}>
+              <Text style={styles.countText}>{registeredCount}/6 completados</Text>
+            </View>
+          </View>
 
-            {renderModalContent()}
+          {/* Separador */}
+          <View style={styles.divider} />
+
+          {/* Sub-grid con las 6 tarjetas de hábitos */}
+          <View style={styles.gridInner}>
+            {HABIT_KEYS.map((key) => {
+              const item = HABIT_CATALOG[key];
+              const currentVal = habits[key];
+
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.card,
+                    { backgroundColor: HABIT_CARD_COLORS[key] },
+                    isLockedToday && styles.cardLocked,
+                    currentVal !== null && styles.cardActiveBorder,
+                  ]}
+                  onPress={() => openHabitModal(key)}
+                  activeOpacity={isLockedToday ? 0.9 : 0.7}
+                >
+                  <View style={styles.imageFrame}>
+                    {item.image ? (
+                      <Image source={item.image} style={styles.cardImage} resizeMode="contain" />
+                    ) : (
+                      <Text style={styles.emoji}>{item.emoji}</Text>
+                    )}
+                    {currentVal !== null && (
+                      <View style={styles.cardCheckBadge}>
+                        <Ionicons name="checkmark" size={12} color={COLORS.white} />
+                      </View>
+                    )}
+                  </View>
+
+                  <Text style={styles.cardTitle}>{item.label}</Text>
+
+                  {currentVal === null && (
+                    <View style={styles.iconContainer}>
+                      <Ionicons name="arrow-forward" size={ms(14)} color={COLORS.primary} />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Sección inferior: Estado bloqueado o Botón de confirmación */}
+          {isLockedToday ? (
+            <View style={styles.lockedBottomContainer}>
+              <View style={styles.lockedBottomBadge}>
+                <Ionicons name="happy-outline" size={18} color={COLORS.primary} style={styles.lockedBottomHappyIcon} />
+                <Ionicons name="lock-closed" size={16} color={COLORS.primary} style={styles.lockedBottomLockIcon} />
+                <Text style={styles.lockedBottomBadgeText}>Evaluación completada por hoy</Text>
+              </View>
+              <Text style={styles.lockedBottomHelpText}>
+                Próximo check-in habilitado mañana.
+              </Text>
+            </View>
+          ) : (
+            !isConfirmed && (
+              <View style={styles.confirmationSection}>
+                <TouchableOpacity
+                  style={[
+                    styles.globalConfirmButton,
+                    registeredCount < 6 && styles.globalConfirmDisabled,
+                  ]}
+                  disabled={registeredCount < 6}
+                  onPress={handleConfirm}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.confirmButtonContent}>
+                    {registeredCount === 6 && (
+                      <Ionicons name="checkmark-circle" size={16} color={COLORS.white} style={styles.confirmIcon} />
+                    )}
+                    <Text
+                      style={[
+                        styles.globalConfirmText,
+                        registeredCount < 6 && styles.globalConfirmDisabledText,
+                      ]}
+                    >
+                      {registeredCount === 6 ? 'Registrar hábitos' : 'Registrar'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )
+          )}
+        </View>
+
+        {/* Modal de calificación */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
+            <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setModalVisible(false)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close" size={22} color={COLORS.closeIcon} />
+              </TouchableOpacity>
+
+              {activeHabit && (
+                <View
+                  style={[
+                    styles.modalIconArea,
+                    activeHabit === 'hidratacion' && styles.waterModalIconArea,
+                  ]}
+                >
+                  {HABIT_CATALOG[activeHabit].image ? (
+                    <Image
+                      source={HABIT_CATALOG[activeHabit].image}
+                      style={styles.modalHabitImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <Text style={styles.modalEmoji}>{HABIT_CATALOG[activeHabit].emoji}</Text>
+                  )}
+                </View>
+              )}
+
+              <Text style={styles.questionText}>
+                {activeHabit ? HABIT_CATALOG[activeHabit].question : '¿Cómo evalúas este concepto hoy?'}
+              </Text>
+
+              {renderModalContent()}
+            </Pressable>
           </Pressable>
-        </Pressable>
-      </Modal>
-
+        </Modal>
+      </ScrollView>
       {onNavigateTab && (
         <PatientBottomNav activeTab="habits" onNavigate={onNavigateTab} />
       )}
@@ -629,171 +703,193 @@ export const DailyCheckInScreen: React.FC<DailyCheckInScreenProps> = ({
   );
 };
 
+// Estilos 
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#EAF5EE' },
+  // Estructura principal de la pantalla
+  container: { flex: 1, backgroundColor: COLORS.screenBackground },
   scrollContent: { paddingHorizontal: s(16), paddingTop: vs(14) },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#DCEEDF',
-    borderRadius: ms(24),
-    borderBottomLeftRadius: ms(6),
-    paddingVertical: vs(16),
-    paddingHorizontal: s(20),
-    marginTop: 0,
+  loadingStatus: { paddingVertical: 1, alignItems: 'center' },
+  ratingSection: { width: '100%', alignItems: 'center' },
+
+  // Encabezado y resumen de progreso de hábitos
+  headerSpacer: {
+    marginTop: 40,
     marginBottom: vs(32),
+    paddingHorizontal: s(4),
+    justifyContent: 'center',
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  greetingRow: { flexDirection: 'row', alignItems: 'center' },
-  greeting: { fontSize: ms(21), fontWeight: '600', color: '#0F613B' },
-  welcomeText: { fontSize: ms(13), color: '#3F6A4B', marginTop: vs(2), fontWeight: '500' },
-  headerDate: { fontSize: ms(13), color: '#6B7280', marginTop: vs(4), fontWeight: '500' },
- 
-  // Banner de bloqueo superior
-  lockedBannerCard: {
+  headerRow: {
     flexDirection: 'row',
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1.5,
-    borderColor: '#BBF7D0',
-    borderRadius: ms(16),
-    padding: s(12),
-    marginBottom: vs(16),
     alignItems: 'center',
-    shadowColor: '#0F613B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    justifyContent: 'space-between',
   },
-  lockedBannerIconBadge: {
-    marginRight: s(10),
+  testNotificationPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E2F3E7',
+    paddingVertical: vs(6),
+    paddingHorizontal: s(10),
+    borderRadius: ms(20),
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    gap: s(4),
   },
-  lockedBannerTextWrapper: {
+  testNotificationPillText: {
+    fontSize: ms(11),
+    fontWeight: '600',
+    color: '#0F613B',
+  },
+  greeting: { fontSize: ms(21), fontWeight: '600', color: COLORS.textPrimary },
+  subGreeting: { fontSize: ms(14), fontWeight: '500', color: COLORS.textSecondary, marginLeft: vs(5), marginTop: vs(6)},
+
+  // Tarjeta principal y encabezado de la cuadrícula
+  gridContainer: {
+    width: '100%',
+    backgroundColor: COLORS.surface,
+    borderRadius: ms(24),
+    padding: s(16),
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: vs(14),
+    marginTop: vs(10),
+  },
+
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  titleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: s(10),
     flex: 1,
   },
-  lockedBannerTitle: {
-    fontSize: ms(14.5),
-    fontWeight: '700',
-    color: '#0F613B',
-    marginBottom: vs(2),
-  },
-  lockedBannerDesc: {
-    fontSize: ms(12),
-    color: '#374151',
-    lineHeight: ms(16.5),
-  },
-
-  progressCard: {
-    width:'100%',
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: '#D9ECDC',
-    borderRadius: ms(18),
-    paddingVertical: vs(12),
-    paddingHorizontal: s(14),
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
+  iconBadge: {
+    width: s(36),
+    height: s(36),
+    borderRadius: ms(12),
+    backgroundColor: COLORS.greenSoft,
     justifyContent: 'center',
-    gap: s(10),
-    marginBottom: vs(16),
+    alignItems: 'center',
   },
-  progressNumber: { fontSize: ms(26), fontWeight: '800', color: '#64748B' },
-  progressEmoji: { fontSize: ms(20) },
-  progressTextGroup: { alignItems: 'center' },
-  progressText: { fontSize: ms(13.5), color: '#374151', marginTop: 0, fontWeight: '600' },
-  progressHelpText: { fontSize: ms(11), color: '#64748B', marginTop: vs(3) },
+  sectionTitle: {
+    fontSize: ms(16),
+    fontWeight: '700',
+    color: COLORS.textHeading,
+  },
+  sectionSubText: {
+    fontSize: ms(11),
+    color: COLORS.textMuted,
+    marginTop: 1,
+  },
+  countBadge: {
+    backgroundColor: COLORS.screenBackground,
+    paddingHorizontal: s(10),
+    paddingVertical: vs(5),
+    borderRadius: ms(12),
+  },
+  countBadgeSuccess: {
+    backgroundColor: COLORS.greenBadge,
+  },
+  countText: {
+    fontSize: ms(11),
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginTop: vs(5),
+    marginBottom: vs(20),
+  },
 
-  grid: {
+  // Cuadrícula y tarjetas individuales
+  gridInner: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderRadius: ms(20),
-    padding: s(12),
-    paddingTop: vs(16),
-    borderWidth: 1,
-    borderColor: '#E9EEF0',
-    rowGap: vs(14),
+    rowGap: vs(20),
+  },
+
+  iconContainer: {
+    marginTop: vs(6),
   },
   card: {
-    width: '48%',
-    minHeight: vs(165),
+    width: '30%',
+    minHeight: vs(120),
     borderRadius: ms(18),
-    padding: s(12),
+    padding: s(8),
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
+    alignItems: 'center',
+    elevation: 1,
   },
-  cardLocked: { opacity: 0.95, borderColor: '#BBF7D0' },
+  cardActiveBorder: {
+    borderWidth: 2,
+    borderColor: COLORS.greenBorder,
+  },
+  cardLocked: { opacity: 0.95, borderColor: COLORS.greenBorder },
   imageFrame: {
     width: '100%',
-    height: vs(78),
+    height: vs(70),
     borderRadius: ms(12),
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
   cardCheckBadge: {
     position: 'absolute',
-    top: s(6),
-    left: s(6),
+    bottom: s(10),
+    right: s(4),
     width: s(22),
     height: s(22),
     borderRadius: s(11),
-    backgroundColor: '#4A9F45',
+    backgroundColor: COLORS.greenSuccess,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cardLockIconBadge: {
-    position: 'absolute',
-    top: s(6),
-    right: s(6),
-    backgroundColor: '#E8F5E9',
-    padding: s(4),
-    borderRadius: ms(8),
-  },
-  emoji: { fontSize: ms(44) },
+  emoji: { fontSize: ms(40) },
   cardImage: { width: '100%', height: '100%' },
-  cardTitle: { fontSize: ms(15.5), fontWeight: '700', color: '#1F2937' },
-  cardSubtitle: { fontSize: ms(11.5), color: '#475569', marginTop: vs(4) },
+  cardTitle: { fontSize: ms(12), fontWeight: '500', color: COLORS.textPrimary, alignSelf: 'center', marginTop: vs(4) },
 
-  confirmationSection:
-   { 
+  // Confirmación de la evaluación diaria
+  confirmationSection: {
     width: '100%',
     marginTop: vs(16),
     paddingTop: vs(14),
-    borderTopColor: '#F1F5F9',
-    alignItems: 'center' 
-    },
-    
+    borderTopColor: COLORS.dividerSoft,
+    alignItems: 'center',
+  },
+
+
+  //registrar habitos boton
   globalConfirmButton: {
-    backgroundColor: '#0F613B',
-    width: '85%',
-    maxWidth: s(320),
+    backgroundColor: COLORS.registerButton,
+    width: '50%',
     alignSelf: 'center',
-    minHeight: vs(46),
+    height: vs(45),
     paddingVertical: vs(12),
     borderRadius: ms(14),
     borderWidth: 1,
-    borderColor: '#0F613B',
+    borderColor: COLORS.registerButton,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOpacity: 0,
     elevation: 1,
   },
-  globalConfirmDisabled: { backgroundColor: '#F3F4F6', borderColor: '#E1E5E9', shadowOpacity: 0 },
+  globalConfirmDisabled: {
+    backgroundColor: COLORS.disabledBackground,
+    borderColor: COLORS.disabledBorder,
+    shadowOpacity: 0,
+  },
   confirmButtonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   confirmIcon: { marginRight: s(6) },
-  globalConfirmText: { color: '#374151', fontSize: ms(16), fontWeight: 'bold' },
-  globalConfirmDisabledText: { color: '#64748B', fontSize: ms(14), fontWeight: '600' },
+  globalConfirmText: { color: COLORS.surface, fontSize: ms(14), fontWeight: 'bold', alignSelf: 'center' },
+  globalConfirmDisabledText: { color: COLORS.textMuted, fontSize: ms(14), fontWeight: '700' },
 
-  // Sección inferior bloqueada
+  // Estado visible cuando la evaluación diaria ya está bloqueada
   lockedBottomContainer: {
     marginTop: vs(10),
     alignItems: 'center',
@@ -802,33 +898,40 @@ const styles = StyleSheet.create({
   lockedBottomBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: COLORS.greenSoft,
     paddingVertical: vs(10),
     paddingHorizontal: s(20),
     borderRadius: ms(25),
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: COLORS.greenOutline,
     marginBottom: vs(6),
   },
   lockedBottomBadgeText: {
-    color: '#0F613B',
+    color: COLORS.greenPrimary,
     fontSize: ms(14),
-    fontWeight: '700',
+    fontWeight: '600',
   },
   lockedBottomHappyIcon: {
-    marginRight: s(6),
+    marginRight: s(17),
   },
+  lockedBottomLockIcon: { marginRight: s(6) },
   lockedBottomHelpText: {
     fontSize: ms(12),
-    color: '#6B7280',
+    color: COLORS.textPrimary,
     fontWeight: '500',
   },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.45)', justifyContent: 'center', alignItems: 'center' },
+  // Contenedor y encabezado del modal de calificación
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: COLORS.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalContent: {
     width: '90%',
     maxWidth: 400,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderRadius: ms(20),
     padding: s(18),
     alignItems: 'center',
@@ -840,20 +943,21 @@ const styles = StyleSheet.create({
     width: s(88),
     height: s(88),
     borderWidth: 2,
-    borderColor: '#C6E3D1',
+    borderColor: COLORS.greenBorder,
     borderRadius: ms(20),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: vs(14),
   },
-  waterModalIconArea: { borderColor: '#93C5FD', backgroundColor: '#EFF6FF' },
+  waterModalIconArea: { borderColor: COLORS.greenBorder, backgroundColor: COLORS.blueSoft },
   modalEmoji: { fontSize: ms(44) },
   modalHabitImage: { width: s(60), height: s(60) },
-  questionText: { fontSize: ms(15), fontWeight: '600', color: '#4b5563', marginBottom: vs(16), textAlign: 'center' },
+  questionText: { fontSize: ms(15), fontWeight: '600', color: COLORS.textQuestion, marginBottom: vs(16), textAlign: 'center' },
 
+  // Escala de calificación compartida por los hábitos
   segmentedControl: {
     flexDirection: 'row',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: COLORS.disabledBackground,
     borderRadius: ms(25),
     padding: s(4),
     width: '100%',
@@ -867,36 +971,35 @@ const styles = StyleSheet.create({
     left: s(4),
     width: '20%',
     borderRadius: ms(20),
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 3,
     elevation: 2,
   },
   segmentButton: { flex: 1, paddingVertical: vs(10), paddingHorizontal: 2, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
-  segmentLabel: { fontSize: ms(10), fontWeight: '700', color: '#9ca3af', textAlign: 'center' },
-  segmentLabelActive: { color: '#334155' },
+  segmentLabel: { fontSize: ms(10), fontWeight: '700', color: COLORS.ratingLabel, textAlign: 'center' },
+  segmentLabelActive: { color: COLORS.ratingLabelActive },
 
   registerButton: {
-    backgroundColor: '#0F613B',
+    backgroundColor: COLORS.greenAction,
     paddingVertical: vs(11),
     paddingHorizontal: s(44),
     borderRadius: ms(25),
     marginTop: vs(4),
   },
-  registerButtonDisabled: { backgroundColor: '#9ca3af' },
-  registerButtonText: { color: '#FFFFFF', fontSize: ms(15), fontWeight: 'bold' },
+  registerButtonDisabled: { backgroundColor: COLORS.textDisabled },
+  registerButtonText: { color: COLORS.surface, fontSize: ms(15), fontWeight: 'bold' },
 
-  // Estilos de Agua
-  waterModalContainer: { width: '100%', alignItems: 'center', paddingVertical: vs(6) },
+  // Controles específicos para registrar hidratación
+  waterModalContainer: { width: '90%', alignItems: 'center', paddingVertical: vs(6)},
   waterCounterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: vs(16) },
   waterStepBtn: {
-    width: s(46),
-    height: s(46),
+    width: s(30),
+    height: s(30),
     borderRadius: s(23),
-    backgroundColor: '#EFF6FF',
+    backgroundColor: COLORS.blueSoft,
     borderWidth: 1.5,
-    borderColor: '#BFDBFE',
+    borderColor: COLORS.blueBorder,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -904,41 +1007,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'center',
-    marginHorizontal: s(12),
-    backgroundColor: '#F8FAFC',
+    marginHorizontal: s(9),
+    backgroundColor: COLORS.surfaceSubtle,
     borderWidth: 1.5,
-    borderColor: '#93C5FD',
+    borderColor: COLORS.blueInputBorder,
     borderRadius: ms(14),
     paddingHorizontal: s(16),
     paddingVertical: vs(8),
-    minWidth: s(130),
+   
   },
-  waterInput: { fontSize: ms(26), fontWeight: '800', color: '#1E3A8A', textAlign: 'center', minWidth: s(46) },
-  waterUnitText: { fontSize: ms(15), fontWeight: '600', color: '#3B82F6', marginLeft: s(6) },
-  waterSaveButton: {
-    backgroundColor: '#2563EB',
-    paddingVertical: vs(12),
-    paddingHorizontal: s(50),
-    borderRadius: ms(25),
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
-    marginTop: vs(8),
-  },
+  waterInput: { fontSize: ms(25), fontWeight: '600', color: COLORS.blueText, textAlign: 'center', minWidth: s(25) },
+  waterUnitText: { fontSize: ms(15), fontWeight: '600', color: COLORS.waterUnit, marginLeft: s(6) },
 
-  // Estilos de Sueño
-  sectionSubtitle: { fontSize: ms(13), fontWeight: '700', color: '#475569', alignSelf: 'flex-start', marginBottom: vs(8), marginTop: vs(4) },
+  // Controles específicos para registrar horas y calidad del sueño
+  sectionSubtitle: { fontSize: ms(13), fontWeight: '700', color: COLORS.textSubdued, alignSelf: 'flex-start', marginBottom: vs(8), marginTop: vs(4) },
+  sleepQualitySubtitle: { marginTop: vs(14) },
   sleepSection: { width: '100%', alignItems: 'center', marginTop: vs(2), marginBottom: vs(12) },
   sleepCounterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: vs(6) },
   sleepStepBtn: {
     width: s(42),
     height: s(42),
     borderRadius: s(21),
-    backgroundColor: '#F1F5F9',
+    backgroundColor: COLORS.sleepControlBackground,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: COLORS.slateBorder,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -947,15 +1039,14 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     justifyContent: 'center',
     marginHorizontal: s(12),
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.surfaceSubtle,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: COLORS.slateBorder,
     borderRadius: ms(14),
     paddingHorizontal: s(14),
     paddingVertical: vs(6),
     minWidth: s(120),
   },
-  sleepInput: { fontSize: ms(22), fontWeight: '800', color: '#1E293B', textAlign: 'center', minWidth: s(40) },
-  sleepUnitText: { fontSize: ms(13.5), fontWeight: '600', color: '#64748B', marginLeft: s(6) },
+  sleepInput: { fontSize: ms(22), fontWeight: '800', color: COLORS.textHeading, textAlign: 'center', minWidth: s(40) },
+  sleepUnitText: { fontSize: ms(13.5), fontWeight: '600', color: COLORS.sleepUnit, marginLeft: s(6) },
 });
-

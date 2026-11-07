@@ -17,7 +17,7 @@ export const WATER_RATED_COLOR = '#2563EB';
 
 /**
  * Obtiene el color de fondo para la tarjeta según el puntaje registrado.
- * Para el hábito de agua (hidratación), retorna un color azul neutro.
+ 
  */
 export const getRatingColor = (rating: number | null, habitKey?: HabitKey | null): string => {
   if (rating === null) return UNRATED_COLOR;
@@ -76,7 +76,7 @@ export const HABIT_CATALOG: Record<HabitKey, HabitDefinition> = {
     key: 'sueno',
     label: 'Sueño',
     category: 'lifestyle',
-    question: '¿Cómo evalúas tu descanso?                         ¿Cuántas horas dormiste?',
+    question: '¿Cómo evalúas tu descanso?',                    
     image: require('../../assets/sueno.png'),
   },
   estres: {

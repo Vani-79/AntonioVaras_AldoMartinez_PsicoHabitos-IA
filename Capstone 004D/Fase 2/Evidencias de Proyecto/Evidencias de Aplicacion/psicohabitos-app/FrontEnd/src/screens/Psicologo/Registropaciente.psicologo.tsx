@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Image,
   Alert,
   BackHandler,
   KeyboardAvoidingView,
@@ -25,6 +24,9 @@ import {
 import { VincularPacienteTab } from './components/VincularPacienteTab';
 import { formatToMySqlDateTime, formatToChileanDate } from '../../utils/date';
 import { isValidEmail, validatePatientForm } from '../../utils/validators';
+import { PSYCHOLOGIST_COLORS } from './psychologistColors';
+
+const REGISTRATION_COLORS = PSYCHOLOGIST_COLORS.registroPaciente;
 
 const SESSION_DURATIONS = [
   { key: '30', label: '30 min' },
@@ -47,8 +49,6 @@ const timeToMinutes = (timeStr: string) => {
   const [h, m] = timeStr.split(':').map(Number);
   return h * 60 + m;
 };
-
-
 
 const GENDER_OPTIONS: { key: Gender; label: string }[] = [
   { key: 'femenino', label: 'Femenino' },
@@ -73,8 +73,8 @@ const INITIAL_FORM: PatientRegistrationForm = {
   fechaNacimiento: '',
   genero: '',
   fechaPrimeraSesion: '',
-  horaPrimeraSesion: '10:00',
-  duracionPrimeraSesion: '60',
+  horaPrimeraSesion: '',
+  duracionPrimeraSesion: '',
   modalidadPrimeraSesion: 'presencial',
   observacionesPrimeraSesion: '',
   email: '',
@@ -115,16 +115,6 @@ const hasEmptyFieldError = (isTouched?: boolean, value?: string): boolean => {
   return Boolean(isTouched && !value?.trim());
 };
 
-const isSessionTimeInPast = (selectedDate?: string, selectedTime?: string): boolean => {
-  if (!selectedDate || !selectedTime) return false;
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  if (selectedDate !== todayStr) return false;
-  const startMinutes = timeToMinutes(selectedTime);
-  const nowMinutes = today.getHours() * 60 + today.getMinutes();
-  return startMinutes <= nowMinutes + 30;
-};
-
 const hasScheduleConflict = (
   selectedTime?: string,
   durationStr?: string,
@@ -161,8 +151,8 @@ const buildPatientRecord = (form: PatientRegistrationForm): MySqlPatientRecord =
   fecha_nacimiento: form.fechaNacimiento,
   genero: form.genero as Gender,
   fecha_primera_sesion: form.fechaPrimeraSesion,
-  hora_primera_sesion: form.horaPrimeraSesion || '10:00',
-  duracion_primera_sesion: Number(form.duracionPrimeraSesion) || 60,
+  hora_primera_sesion: form.horaPrimeraSesion || '',
+  duracion_primera_sesion: Number(form.duracionPrimeraSesion) || 0,
   modalidad_primera_sesion: form.modalidadPrimeraSesion || 'presencial',
   observaciones_primera_sesion: (form.observacionesPrimeraSesion || '').trim(),
   email: form.email.trim().toLowerCase(),
@@ -188,21 +178,6 @@ const notifyRegisterResult = (
 
 // =================== SUBCOMPONENTES PRESENTACIONALES ===================
 
-const InstitutionalHeader: React.FC = () => (
-  <View style={styles.header}>
-    <Image
-      source={require('../../../assets/logo.png')}
-      style={styles.logoImage}
-      resizeMode="contain"
-    />
-    <Text style={styles.brandTitle}>
-      <Text style={styles.titlePsico}>Psico</Text>
-      <Text style={styles.titleHabitos}>Hábitos-IA</Text>
-    </Text>
-    <Text style={styles.sloganText}>Tu bienestar, un día a la vez.</Text>
-  </View>
-);
-
 interface RegistrationModeSelectorProps {
   mode: 'nuevo' | 'existente';
   onSelectMode: (mode: 'nuevo' | 'existente') => void;
@@ -222,7 +197,7 @@ const RegistrationModeSelector: React.FC<RegistrationModeSelectorProps> = ({
         <Ionicons
           name="person-add"
           size={16}
-          color={isNuevo ? '#FFFFFF' : '#4B5563'}
+          color={isNuevo ? REGISTRATION_COLORS.fondoBase : REGISTRATION_COLORS.textoSecundario}
         />
         <Text
           style={[
@@ -241,7 +216,7 @@ const RegistrationModeSelector: React.FC<RegistrationModeSelectorProps> = ({
         <Ionicons
           name="link"
           size={16}
-          color={!isNuevo ? '#FFFFFF' : '#4B5563'}
+          color={!isNuevo ? REGISTRATION_COLORS.fondoBase : REGISTRATION_COLORS.textoSecundario}
         />
         <Text
           style={[
@@ -288,7 +263,7 @@ const ValidatedTextInput: React.FC<ValidatedTextInputProps> = ({
     <TextInput
       style={[styles.input, hasError && styles.inputErrorBorder]}
       placeholder={placeholder}
-      placeholderTextColor="#9CA3AF"
+      placeholderTextColor={REGISTRATION_COLORS.textoSecundario}
       value={value}
       onChangeText={onChangeText}
       onBlur={onBlur}
@@ -327,7 +302,7 @@ const PickerTriggerField: React.FC<PickerTriggerFieldProps> = ({
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <Ionicons name={iconName} size={20} color="#0F613B" style={styles.dateIcon} />
+      <Ionicons name={iconName} size={20} color={REGISTRATION_COLORS.iconosPerfil} style={styles.dateIcon} />
       <Text
         style={[
           styles.datePickerValueText,
@@ -336,7 +311,7 @@ const PickerTriggerField: React.FC<PickerTriggerFieldProps> = ({
       >
         {valueText}
       </Text>
-      <Ionicons name="chevron-down" size={18} color="#6B7280" />
+      <Ionicons name="chevron-down" size={18} color={REGISTRATION_COLORS.iconosPerfil} />
     </TouchableOpacity>
   </View>
 );
@@ -434,7 +409,7 @@ const ModalityChips: React.FC<ModalityChipsProps> = ({
           <Ionicons
             name={item.icon}
             size={16}
-            color={isSelected ? '#0F613B' : '#4B5563'}
+            color={isSelected ? REGISTRATION_COLORS.textoBlanco : REGISTRATION_COLORS.textoSecundario}
             style={{ marginRight: 6 }}
           />
           <Text
@@ -631,12 +606,11 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Registrar Nuevo Paciente</Text>
-      <Text style={styles.cardSubtitle}>Complete la ficha clínica del paciente</Text>
+      <Text style={styles.cardTitle}>Formulario de registro</Text>
 
       <ValidatedTextInput
         label="Nombre"
-        placeholder="Ingresa tu nombre"
+        placeholder="Ej. 'Carla'"
         value={form.nombre}
         hasError={hasEmptyFieldError(touched.nombre, form.nombre)}
         errorMessage="Este campo no puede estar vacío."
@@ -646,7 +620,7 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
 
       <ValidatedTextInput
         label="Apellido Paterno"
-        placeholder="Ingresa tu apellido paterno"
+        placeholder="Ej. 'Gómez'"
         value={form.apellidoPaterno}
         hasError={hasEmptyFieldError(touched.apellidoPaterno, form.apellidoPaterno)}
         errorMessage="Este campo no puede estar vacío."
@@ -656,7 +630,7 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
 
       <ValidatedTextInput
         label="Apellido Materno"
-        placeholder="Ingresa tu apellido materno"
+        placeholder="Ej. 'Pérez'"
         value={form.apellidoMaterno}
         hasError={hasEmptyFieldError(touched.apellidoMaterno, form.apellidoMaterno)}
         errorMessage="Este campo no puede estar vacío."
@@ -665,7 +639,7 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
       />
 
       <PickerTriggerField
-        label="Fecha de Nacimiento"
+        label="Fecha de nacimiento"
         required
         valueText={birthDateLabel}
         isPlaceholder={!form.fechaNacimiento}
@@ -678,7 +652,7 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
           <Text style={styles.inputLabel}>Edad</Text>
           <TextInput
             style={styles.input}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={REGISTRATION_COLORS.textoSecundario}
             value={form.edad}
             editable={false}
           />
@@ -696,7 +670,7 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
       </View>
 
       <PickerTriggerField
-        label="Fecha de Primera Sesión"
+        label="Fecha sesión"
         required
         valueText={sessionDateLabel}
         isPlaceholder={!form.fechaPrimeraSesion}
@@ -705,7 +679,8 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
       />
 
       <PickerTriggerField
-        label="Hora de Inicio de la Primera Sesión"
+        label="Hora sesión"
+        required
         valueText={sessionTimeLabel}
         isPlaceholder={!form.horaPrimeraSesion}
         iconName="time-outline"
@@ -713,7 +688,7 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
       />
 
       <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Duración de la Sesión</Text>
+        <Text style={styles.inputLabel}>Duración</Text>
         <DurationChips
           selectedDuration={form.duracionPrimeraSesion}
           onSelectDuration={(dur) => updateField('duracionPrimeraSesion', dur)}
@@ -721,7 +696,7 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Modalidad de la Sesión</Text>
+        <Text style={styles.inputLabel}>Modalidad</Text>
         <ModalityChips
           selectedModality={form.modalidadPrimeraSesion}
           onSelectModality={(mod) => updateField('modalidadPrimeraSesion', mod)}
@@ -729,11 +704,11 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Observaciones de la Sesión</Text>
+        <Text style={styles.inputLabel}>Observaciones</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
           placeholder="Observaciones iniciales, motivo de consulta, etc."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={REGISTRATION_COLORS.textoSecundario}
           value={form.observacionesPrimeraSesion}
           onChangeText={(text) => updateField('observacionesPrimeraSesion', text)}
           multiline
@@ -742,8 +717,8 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
       </View>
 
       <ValidatedTextInput
-        label="Email del Paciente"
-        placeholder="paciente@email.com"
+        label="Correo electrónico"
+        placeholder="Paciente@email.com"
         value={form.email}
         hasError={Boolean(emailError)}
         errorMessage={emailError ?? undefined}
@@ -755,7 +730,7 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
 
       <DatePickerModal
         visible={showBirthDatePicker}
-        title="Fecha de Nacimiento"
+        title="Fecha de nacimiento"
         initialDate={form.fechaNacimiento || '2000-01-01'}
         maxDate={new Date(2010, 11, 31)}
         onClose={() => setShowBirthDatePicker(false)}
@@ -764,7 +739,7 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
 
       <DatePickerModal
         visible={showSessionDatePicker}
-        title="Fecha de Primera Sesión"
+        title="Fecha de sesión"
         initialDate={form.fechaPrimeraSesion || new Date().toISOString().split('T')[0]}
         maxDate={new Date()}
         onClose={() => setShowSessionDatePicker(false)}
@@ -773,7 +748,7 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
 
       <TimePickerModal
         visible={showSessionTimePicker}
-        selectedTime={form.horaPrimeraSesion || '10:00'}
+        selectedTime={form.horaPrimeraSesion || ''}
         selectedDate={form.fechaPrimeraSesion}
         allowPastTimes={true}
         busySessions={busySessions}
@@ -793,9 +768,16 @@ const NuevoPacienteForm: React.FC<NuevoPacienteFormProps> = ({
         disabled={isSubmitDisabled}
       >
         {isSaving ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={REGISTRATION_COLORS.textoBlanco} />
         ) : (
-          <Text style={styles.submitButtonText}>Registrar Paciente</Text>
+          <Text
+            style={[
+              styles.submitButtonText,
+              isSubmitDisabled && styles.submitButtonTextDisabled,
+            ]}
+          >
+            Registrar
+          </Text>
         )}
       </TouchableOpacity>
     </View>
@@ -860,8 +842,6 @@ export const RegisterPatientScreen: React.FC<RegisterPatientScreenProps> = ({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <InstitutionalHeader />
-
           <RegistrationModeSelector
             mode={registrationMode}
             onSelectMode={setRegistrationMode}
@@ -882,79 +862,49 @@ export const RegisterPatientScreen: React.FC<RegisterPatientScreenProps> = ({
   );
 };
 
+
+
+// ESTILOS DE FORMULARIO REGISTRO
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: REGISTRATION_COLORS.fondoBase,
   },
-
   
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 60,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  logoImage: {
-    width: 90,
-    height: 90,
-    marginBottom: 10,
-  },
-  brandTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    textAlign: 'center',
-  },
-  titlePsico: {
-    color: '#0E5C3A',
-  },
-  titleHabitos: {
-    color: '#268D77',
-  },
-  sloganText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0E5C3A',
-    marginTop: 4,
-    textAlign: 'center',
-  },
+
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
+    marginTop: 20,
+    backgroundColor: REGISTRATION_COLORS.fondoBase,
+    borderRadius: 20,
     padding: 22,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+    elevation: 1,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: REGISTRATION_COLORS.bordeIconos,
   },
+
   cardTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#2D3748',
+    fontSize: 16,
+    fontWeight: '600',
+    color: REGISTRATION_COLORS.textoPrincipal,
     textAlign: 'center',
+    marginBottom: 30,
   },
-  cardSubtitle: {
-    fontSize: 14,
-    color: '#718096',
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 20,
-  },
+
   segmentContainer: {
+    marginVertical: 20,
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: REGISTRATION_COLORS.fondoiconos,
     borderRadius: 12,
     padding: 4,
-    marginBottom: 16,
+    marginBottom: 1,
   },
+
   segmentBtn: {
     flex: 1,
     flexDirection: 'row',
@@ -964,163 +914,194 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     gap: 6,
   },
+
   segmentBtnActive: {
-    backgroundColor: '#0F613B',
+    backgroundColor: REGISTRATION_COLORS.iconosPerfil,
   },
+
   segmentBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#4B5563',
+    color: REGISTRATION_COLORS.textoSecundario,
   },
+
   segmentBtnTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: REGISTRATION_COLORS.textoBlanco,
+    fontWeight: '600',
   },
+
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 15,
   },
+  
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
+
   inputLabel: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: '#4A5568',
-    marginBottom: 6,
+    fontSize: 13,
+    fontWeight: '600',
+    color: REGISTRATION_COLORS.textoSecundario,
+    marginBottom: 5,
   },
+
   requiredStar: {
-    color: '#EF4444',
+    color: REGISTRATION_COLORS.dangerBright,
   },
+
   input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
+    backgroundColor: REGISTRATION_COLORS.fondoiconos,
+    borderWidth: 1,
+    borderColor: REGISTRATION_COLORS.bordeIconos,
+    borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 15,
-    color: '#1F2937',
+    fontSize: 12,
+    color: REGISTRATION_COLORS.textoPrincipal,
   },
+
   inputErrorBorder: {
-    borderColor: '#DC2626',
-    borderWidth: 1,
+    borderColor: REGISTRATION_COLORS.danger,
+    borderWidth: 2,
   },
 
   fieldErrorText: {
-    color: '#DC2626',
+    color: REGISTRATION_COLORS.danger,
     fontSize: 12,
-    marginTop: 5,
+    marginTop: 9,
   },
+
   datePickerTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    backgroundColor: REGISTRATION_COLORS.fondoiconos,
+    borderWidth: 1,
+    borderColor: REGISTRATION_COLORS.bordeIconos,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 14,
   },
+
   dateIcon: {
-    marginRight: 10,
+    marginRight: 5,
   },
+
   datePickerValueText: {
     flex: 1,
-    fontSize: 15,
-    color: '#1F2937',
-    fontWeight: '500',
+    fontSize: 13,
+    color: REGISTRATION_COLORS.textoPrincipal,
+    fontWeight: '600',
   },
+
   datePickerPlaceholder: {
-    color: '#9CA3AF',
+    color: REGISTRATION_COLORS.textoSecundario,
     fontWeight: '400',
   },
+
   genderContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: REGISTRATION_COLORS.fondoiconos,
+    borderColor: REGISTRATION_COLORS.bordeIconos,
+    borderWidth: 1,
     borderRadius: 12,
     padding: 3,
   },
+
   genderOption: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 9,
+    backgroundColor: REGISTRATION_COLORS.fondoBase,
+    borderColor: REGISTRATION_COLORS.bordeIconos,
+    borderWidth: 1,
   },
+
   genderOptionActive: {
-    backgroundColor: '#0F613B',
-    shadowColor: '#0F613B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+    backgroundColor: REGISTRATION_COLORS.iconosPerfil,
     elevation: 2,
   },
+
   genderOptionText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
+    color: REGISTRATION_COLORS.textoSecundario,
   },
+
   genderOptionTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: REGISTRATION_COLORS.textoBlanco,
   },
+
+  // Botón registrar paciente
   submitButton: {
-    backgroundColor: '#0F613B',
-    borderRadius: 14,
-    paddingVertical: 15,
+    backgroundColor: REGISTRATION_COLORS.iconosPerfil,
+    borderColor: REGISTRATION_COLORS.bordeIconos,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 10,
+    width: '50%',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 10,
-    shadowColor: '#0F613B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    alignSelf: 'center',
+    marginTop: 30,
+    marginBottom: 50,
     elevation: 2,
   },
+
   submitButtonDisabled: {
-    backgroundColor: '#A5C1B3',
-    shadowOpacity: 0,
+    backgroundColor: REGISTRATION_COLORS.fondoiconos,
     elevation: 0,
   },
+
   submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16.5,
-    fontWeight: '700',
+    color: REGISTRATION_COLORS.textoBlanco,
+    fontSize: 14,
+    fontWeight: '600',
   },
+
+  submitButtonTextDisabled: {
+    color: REGISTRATION_COLORS.textoSecundario,
+  },
+
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
     marginTop: 4,
   },
+
   durationChip: {
-    paddingVertical: 9,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: '#F3F4F6',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    backgroundColor: REGISTRATION_COLORS.fondoiconos,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    alignItems: 'center',
+    borderColor: REGISTRATION_COLORS.bordeIconos,
     justifyContent: 'center',
     flexDirection: 'row',
   },
+
   durationChipActive: {
-    backgroundColor: '#EAF5EE',
-    borderColor: '#0F613B',
+    backgroundColor: REGISTRATION_COLORS.iconosPerfil,
+    borderColor: REGISTRATION_COLORS.fondoBase,
   },
+
   durationChipText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#4B5563',
+    color: REGISTRATION_COLORS.textoSecundario,
   },
+
   durationChipTextActive: {
-    color: '#0F613B',
-    fontWeight: '700',
+    color: REGISTRATION_COLORS.textoBlanco,
+    fontWeight: '600',
   },
+
   flexChip: {
     flex: 1,
   },
+
   textArea: {
     minHeight: 76,
     textAlignVertical: 'top',

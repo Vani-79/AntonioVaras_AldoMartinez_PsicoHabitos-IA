@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LegalConsentModal } from '../../components/LegalConsentModal';
+import { AUTH_COLORS } from './components/authStyles';
 
 interface WelcomeScreenProps {
   onStartLogin: () => void;
@@ -65,7 +66,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartLogin }) =>
           {/* Tarjeta 2: Hábitos */}
           <View style={styles.featureCard}>
             <View style={styles.featureIconContainer}>
-              <Ionicons name="sparkles" size={20} color="#0F613B" />
+              <Ionicons name="sparkles" size={20} color={AUTH_COLORS.green} />
             </View>
             <View style={styles.featureTextContainer}>
               <Text style={styles.featureTitle}>Monitoreo de Hábitos</Text>
@@ -78,7 +79,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartLogin }) =>
           {/* Tarjeta 3: Conexión Terapéutica */}
           <View style={styles.featureCard}>
             <View style={styles.featureIconContainer}>
-              <Ionicons name="shield-checkmark" size={20} color="#0F613B" />
+              <Ionicons name="shield-checkmark" size={20} color={AUTH_COLORS.green} />
             </View>
             <View style={styles.featureTextContainer}>
               <Text style={styles.featureTitle}>Conexión Terapéutica</Text>
@@ -100,7 +101,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartLogin }) =>
             <Ionicons
               name="arrow-forward"
               size={22}
-              color="#FFFFFF"
+              color={AUTH_COLORS.white}
               style={styles.buttonIcon}
             />
           </TouchableOpacity>
@@ -114,7 +115,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartLogin }) =>
             <Ionicons
               name="shield-checkmark"
               size={15}
-              color="#10B981"
+              color={AUTH_COLORS.greenBright}
             />
             <Text style={styles.securityText}>
               Espacio seguro y confidencial (Ley N° 21.719)
@@ -140,7 +141,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartLogin }) =>
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AUTH_COLORS.white,
   },
   scrollContent: {
     flexGrow: 1,
@@ -167,46 +168,45 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   titlePsico: {
-    color: '#0E5C3A',
+    color: AUTH_COLORS.greenDark,
   },
   titleHabitos: {
-    color: '#268D77',
+    color: AUTH_COLORS.greenLight,
   },
   sloganText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#0E5C3A',
+    color: AUTH_COLORS.greenDark,
     marginTop: 4,
     textAlign: 'center',
   },
   featuresSection: {
-    width: '100%',
+    width: '95%',
     marginVertical: 18,
   },
   featureCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F7FAF8',
+    backgroundColor: AUTH_COLORS.welcomeBackground,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2EBE5',
-    paddingVertical: 11,
-    paddingHorizontal: 14,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
+    borderColor: AUTH_COLORS.welcomeBorder,
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    marginBottom: 8,
+    shadowColor: AUTH_COLORS.black,
     shadowRadius: 3,
     elevation: 1,
   },
   featureIconContainer: {
-    width: 38,
-    height: 38,
+    width: 35,
+    height: 35,
     borderRadius: 19,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: AUTH_COLORS.greenSoft,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    marginLeft: 12,
   },
   hopeFeatureIcon: {
     width: 26,
@@ -218,52 +218,47 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F613B',
+    color: AUTH_COLORS.green,
     marginBottom: 2,
   },
   featureDescription: {
     fontSize: 12,
-    color: '#526058',
+    color: AUTH_COLORS.greenMutedText,
     lineHeight: 16,
   },
-  buttonSection: {
-    width: '100%',
-    alignItems: 'center',
+ buttonSection: {
+    width: '100%', // Ancho completo para dar espacio a los elementos hijos
+    alignSelf: 'center',
+    alignItems: 'center', // Mantiene el botón de inicio de sesión centrado
     marginTop: 8,
   },
   loginButton: {
-    backgroundColor: '#0F613B',
-    width: '100%',
+    backgroundColor: AUTH_COLORS.green,
+    width: '50%', // Define el ancho deseado para el botón (o 200, etc.)
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderRadius: 14,
-    shadowColor: '#0F613B',
+    shadowColor: AUTH_COLORS.green,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 5,
     elevation: 3,
   },
-  loginButtonDisabled: {
-    backgroundColor: '#C2D6CC',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
   loginButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '700',
+    color: AUTH_COLORS.white,
+    fontSize: 15,
+    fontWeight: '600',
     marginRight: 8,
-  },
-  loginButtonTextDisabled: {
-    color: '#EDF4F0',
   },
   buttonIcon: {
     marginLeft: 4,
+
   },
   securityBadge: {
     flexDirection: 'row',
+    alignSelf: 'flex-start',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 12,
@@ -272,127 +267,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     gap: 6,
   },
-  securityBadgePending: {
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  securityBadgeAccepted: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-  },
   securityText: {
     fontSize: 12.5,
     fontWeight: '600',
-  },
-  securityTextPending: {
-    color: '#059669',
-    textDecorationLine: 'underline',
-  },
-  securityTextAccepted: {
-    color: '#8E9E96',
-    textDecorationLine: 'none',
+    alignSelf: 'flex-start',
+    textAlign: 'left',
   },
   termsHintText: {
     fontSize: 11,
-    color: '#8E9E96',
+    color: AUTH_COLORS.grayGreen,
     marginTop: 4,
-    textAlign: 'center',
-  },
-
-  // Estilos del Modal / Pop-up
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  modalCard: {
-    backgroundColor: '#FFFFFF',
-    width: '100%',
-    maxWidth: 360,
-    borderRadius: 22,
-    padding: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  modalIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#E8F5E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F613B',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  modalLawBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E4EDE7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-    marginBottom: 16,
-  },
-  modalLawBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#0F613B',
-  },
-  modalContentBox: {
-    width: '100%',
-    backgroundColor: '#F7FAF8',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#E2EBE5',
-  },
-  modalParagraph: {
-    fontSize: 13,
-    color: '#374151',
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  modalBoldText: {
-    fontWeight: '700',
-    color: '#0F613B',
-  },
-  modalAcceptButton: {
-    backgroundColor: '#0F613B',
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
-  modalAcceptButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  modalCloseButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  modalCloseButtonText: {
-    color: '#6B7280',
-    fontSize: 13,
-    fontWeight: '600',
   },
 });

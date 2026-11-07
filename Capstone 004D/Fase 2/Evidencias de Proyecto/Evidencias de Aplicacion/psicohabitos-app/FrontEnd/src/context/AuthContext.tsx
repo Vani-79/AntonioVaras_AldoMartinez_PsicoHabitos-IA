@@ -15,6 +15,7 @@ import {
   storageService,
   authSession,
   ApiResponse,
+  habitNotificationService,
 } from '../services';
 
 export interface AuthContextType {
@@ -23,7 +24,7 @@ export interface AuthContextType {
   patients: MySqlPatientRecord[];
   login: (userData: TestUser, rememberMe?: boolean) => Promise<void>;
   logout: () => Promise<void>;
-  switchRole: (targetRole: UserRole) => Promise<boolean>;
+  switchRole: (targetRole: UserRole) => Promise<{ success: boolean; error?: string }>;
   registerPatient: (record: MySqlPatientRecord) => Promise<ApiResponse<MySqlPatientRecord>>;
   refreshPatients: () => Promise<void>;
 }
@@ -62,6 +63,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (saved.role === 'psicologo') {
             const list = await patientService.getRecentPatients(5, saved.email);
             if (isMounted) setPatients(list);
+          } else if (saved.role === 'paciente') {
+            void habitNotificationService.syncHabitReminders(saved.email || saved.name, 'paciente');
           }
         }
       } catch (err) {
@@ -107,6 +110,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (userData.role === 'psicologo') {
         const list = await patientService.getRecentPatients(5, userData.email);
         setPatients(list);
+      } else if (userData.role === 'paciente') {
+        void habitNotificationService.syncHabitReminders(userData.email || userData.name, 'paciente');
       }
     },
     []
@@ -116,6 +121,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       authService.logout();
       await storageService.clearAll();
+      await habitNotificationService.cancelHabitReminders();
     } catch (e) {
       console.warn('[AuthContext] Error cerrando sesión:', e);
     } finally {
@@ -146,10 +152,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 
   const switchRole = useCallback(
-    async (targetRole: UserRole): Promise<boolean> => {
+    async (targetRole: UserRole): Promise<{ success: boolean; error?: string }> => {
       try {
         setIsLoading(true);
-        const res = await authService.switchRole(targetRole);
+        const res = await authService.switchRole(targetRole, user?.email);
         if (res.success && res.data) {
           if (res.data.token) {
             authSession.setToken(res.data.token);
@@ -185,17 +191,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           } else {
             setPatients([]);
           }
-          return true;
+          return { success: true };
         }
-        return false;
-      } catch (err) {
+        return { success: false, error: res.error || 'No se pudo cambiar de portal.' };
+      } catch (err: any) {
         console.warn('[AuthContext] Error cambiando de rol:', err);
-        return false;
+        return { success: false, error: err?.message || 'Error de conexión al cambiar de portal.' };
       } finally {
         setIsLoading(false);
       }
     },
-    []
+    [user?.email]
   );
 
   const value = useMemo(

@@ -6,6 +6,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { PSYCHOLOGIST_COLORS } from '../screens/Psicologo/psychologistColors';
 
 export type PsychologistTab = 'inicio' | 'pacientes' | 'calendario' | 'perfil';
 
@@ -14,79 +15,118 @@ interface PsychologistBottomNavProps {
   onChangeTab: (tab: PsychologistTab) => void;
 }
 
+type TabIconName = keyof typeof Ionicons.glyphMap;
+
+interface NavItemConfig {
+  key: PsychologistTab;
+  label: string;
+  activeIcon: TabIconName;
+  inactiveIcon: TabIconName;
+}
+
+const NAV_ITEMS: NavItemConfig[] = [
+  {
+    key: 'inicio',
+    label: 'Inicio',
+    activeIcon: 'home',
+    inactiveIcon: 'home-outline',
+  },
+  {
+    key: 'pacientes',
+    label: 'Pacientes',
+    activeIcon: 'people',
+    inactiveIcon: 'people-outline',
+  },
+  {
+    key: 'calendario',
+    label: 'Calendario',
+    activeIcon: 'calendar',
+    inactiveIcon: 'calendar-outline',
+  },
+  {
+    key: 'perfil',
+    label: 'Perfil',
+    activeIcon: 'person',
+    inactiveIcon: 'person-outline',
+  },
+];
+
+interface NavItemProps {
+  label: string;
+  activeIcon: TabIconName;
+  inactiveIcon: TabIconName;
+  isActive: boolean;
+  activeColor: string;
+  inactiveColor: string;
+  onPress: () => void;
+}
+
+const PsychologistNavItem: React.FC<NavItemProps> = ({
+  label,
+  activeIcon,
+  inactiveIcon,
+  isActive,
+  activeColor,
+  inactiveColor,
+  onPress,
+}) => {
+  const iconName = isActive ? activeIcon : inactiveIcon;
+  const color = isActive ? activeColor : inactiveColor;
+
+  return (
+    <TouchableOpacity
+      style={styles.tab}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <Ionicons
+        name={iconName}
+        size={22}
+        color={color}
+      />
+      <Text
+        style={[
+          styles.label,
+          { color },
+          isActive && styles.activeLabel,
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
 export const PsychologistBottomNav: React.FC<
   PsychologistBottomNavProps
 > = ({
   activeTab,
   onChangeTab,
 }) => {
+  const navigationColors = PSYCHOLOGIST_COLORS[activeTab].navigation;
+
   return (
-    <View style={styles.container}>
-
-      {/* Inicio */}
-      <TouchableOpacity
-        style={styles.tab}
-        onPress={() => onChangeTab('inicio')}
-        activeOpacity={0.8}
-      >
-        <Ionicons
-          name={activeTab === 'inicio' ? 'home' : 'home-outline'}
-          size={22}
-          color={activeTab === 'inicio' ? '#0F613B' : '#9CA3AF'}
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: navigationColors.background,
+          borderTopColor: navigationColors.border,
+        },
+      ]}
+    >
+      {NAV_ITEMS.map((item) => (
+        <PsychologistNavItem
+          key={item.key}
+          label={item.label}
+          activeIcon={item.activeIcon}
+          inactiveIcon={item.inactiveIcon}
+          isActive={activeTab === item.key}
+          activeColor={navigationColors.active}
+          inactiveColor={navigationColors.inactive}
+          onPress={() => onChangeTab(item.key)}
         />
-        <Text style={[styles.label, activeTab === 'inicio' && styles.activeLabel]}>
-          Inicio
-        </Text>
-      </TouchableOpacity>
-
-      {/* Pacientes */}
-      <TouchableOpacity
-        style={styles.tab}
-        onPress={() => onChangeTab('pacientes')}
-        activeOpacity={0.8}
-      >
-        <Ionicons
-          name={activeTab === 'pacientes' ? 'people' : 'people-outline'}
-          size={22}
-          color={activeTab === 'pacientes' ? '#0F613B' : '#9CA3AF'}
-        />
-        <Text style={[styles.label, activeTab === 'pacientes' && styles.activeLabel]}>
-          Pacientes
-        </Text>
-      </TouchableOpacity>
-
-      {/* Calendario */}
-      <TouchableOpacity
-        style={styles.tab}
-        onPress={() => onChangeTab('calendario')}
-        activeOpacity={0.8}
-      >
-        <Ionicons
-          name={activeTab === 'calendario' ? 'calendar' : 'calendar-outline'}
-          size={22}
-          color={activeTab === 'calendario' ? '#0F613B' : '#9CA3AF'}
-        />
-        <Text style={[styles.label, activeTab === 'calendario' && styles.activeLabel]}>
-          Calendario
-        </Text>
-      </TouchableOpacity>
-
-      {/* Perfil */}
-      <TouchableOpacity
-        style={styles.tab}
-        onPress={() => onChangeTab('perfil')}
-        activeOpacity={0.8}
-      >
-        <Ionicons
-          name={activeTab === 'perfil' ? 'person' : 'person-outline'}
-          size={22}
-          color={activeTab === 'perfil' ? '#0F613B' : '#9CA3AF'}
-        />
-        <Text style={[styles.label, activeTab === 'perfil' && styles.activeLabel]}>
-          Perfil
-        </Text>
-      </TouchableOpacity>
-
+      ))}
     </View>
   );
 };
@@ -94,9 +134,7 @@ export const PsychologistBottomNav: React.FC<
 const styles = StyleSheet.create({
   container: {
     height: 72,
-    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
@@ -114,12 +152,10 @@ const styles = StyleSheet.create({
   label: {
     marginTop: 4,
     fontSize: 11,
-    color: '#9CA3AF',
     fontWeight: '600',
   },
 
   activeLabel: {
-    color: '#0F613B',
     fontWeight: '700',
   },
 });

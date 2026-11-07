@@ -39,6 +39,12 @@ interface LoginScreenProps {
   ) => void;
 }
 
+const LOGIN_COLORS = {
+  surface: '#FFFFFF',
+  brandTitlePrimary: '#218757ce',
+  brandTitleSecondary: '#2c9189a5',
+  slogan: '#218757ce',
+} as const;
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   onBack,
@@ -210,7 +216,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: LOGIN_COLORS.surface,
   },
   flexContainer: {
     flex: 1,
@@ -218,8 +224,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 40,
     paddingBottom: 60,
+    
   },
   header: {
     alignItems: 'center',
@@ -237,15 +244,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   titlePsico: {
-    color: '#0E5C3A',
+    color: LOGIN_COLORS.brandTitlePrimary,
   },
   titleHabitos: {
-    color: '#268D77',
+    color: LOGIN_COLORS.brandTitleSecondary,
   },
   sloganText: {
     fontSize: 14.5,
-    fontWeight: '700',
-    color: '#0E5C3A',
+    fontWeight: '600',
+    color: LOGIN_COLORS.slogan,
     marginTop: 4,
     textAlign: 'center',
   },

@@ -7,8 +7,11 @@ import { PatientExercisesScreen } from '../screens/Paciente/Ejercicios.paciente'
 import { HabitDetailScreen } from '../screens/Paciente/Ejerciciosvideos.paciente';
 import { PatientChatbotScreen } from '../screens/Paciente/Chathope.paciente';
 import { PatientProfileScreen } from '../screens/Paciente/Perfil.paciente';
-import { PatientTab } from '../components/PatientBottomNav';
+import { PatientTab } from '../components/Iconosbarrapaciente';
 import { useAuth } from '../context/AuthContext';
+
+
+
 
 const Stack = createNativeStackNavigator<PatientStackParamList>();
 
@@ -58,7 +61,6 @@ export const PatientNavigator: React.FC = () => {
       <Stack.Screen name="PatientCalendar">
         {({ navigation }) => (
           <PatientCalendarScreen
-            userName={userName}
             onNavigateTab={getTabHandler(navigation)}
           />
         )}
@@ -67,7 +69,6 @@ export const PatientNavigator: React.FC = () => {
       <Stack.Screen name="PatientExercises">
         {({ navigation }) => (
           <PatientExercisesScreen
-            userName={userName}
             onNavigateTab={getTabHandler(navigation)}
             onOpenHabit={(habitKey, habitTitle) => {
               navigation.navigate('PatientExerciseDetail', { habitKey, habitTitle });
@@ -84,7 +85,6 @@ export const PatientNavigator: React.FC = () => {
           <HabitDetailScreen
             habitKey={route.params.habitKey}
             habitTitle={route.params.habitTitle}
-            onBack={() => navigation.goBack()}
             onNavigateTab={getTabHandler(navigation)}
           />
         )}
@@ -95,9 +95,14 @@ export const PatientNavigator: React.FC = () => {
           <PatientChatbotScreen
             userName={userName}
             onNavigateTab={getTabHandler(navigation)}
+            onOpenExerciseDetail={(habitKey, habitTitle) => {
+              navigation.navigate('PatientExerciseDetail', { habitKey, habitTitle });
+            }}
           />
         )}
       </Stack.Screen>
+
+      
 
       <Stack.Screen name="PatientProfile">
         {({ navigation }) => (

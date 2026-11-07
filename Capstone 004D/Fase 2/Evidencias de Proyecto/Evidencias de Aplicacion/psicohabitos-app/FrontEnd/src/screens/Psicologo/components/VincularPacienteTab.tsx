@@ -19,6 +19,9 @@ import {
   MySqlPatientRecord,
 } from '../../../types/patient';
 import { formatToChileanDate } from '../../../utils/date';
+import { PSYCHOLOGIST_COLORS } from '../psychologistColors';
+
+const REGISTRATION_COLORS = PSYCHOLOGIST_COLORS.registroPaciente;
 
 const SESSION_DURATIONS = [
   { key: '30', label: '30 min' },
@@ -142,7 +145,7 @@ const Step1Search: React.FC<Step1SearchProps> = ({
 }) => (
   <View style={styles.card}>
     <View style={styles.cardHeaderIcon}>
-      <Ionicons name="search" size={24} color="#0F613B" />
+      <Ionicons name="search" size={24} color={REGISTRATION_COLORS.iconosPerfil} />
     </View>
     <Text style={styles.cardTitle}>Buscar paciente registrado</Text>
     <Text style={styles.cardSubtitle}>
@@ -152,11 +155,11 @@ const Step1Search: React.FC<Step1SearchProps> = ({
     <View style={styles.inputGroup}>
       <Text style={styles.label}>Correo del paciente</Text>
       <View style={styles.inputWrapper}>
-        <Ionicons name="mail-outline" size={20} color="#6B7280" style={styles.inputIcon} />
+        <Ionicons name="mail-outline" size={20} color={REGISTRATION_COLORS.textoSecundario} style={styles.inputIcon} />
         <TextInput
           style={styles.textInput}
           placeholder="ejemplo@correo.com"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={REGISTRATION_COLORS.textoSecundario}
           value={searchEmail}
           onChangeText={setSearchEmail}
           keyboardType="email-address"
@@ -172,11 +175,11 @@ const Step1Search: React.FC<Step1SearchProps> = ({
       disabled={isSearching}
     >
       {isSearching ? (
-        <ActivityIndicator color="#FFFFFF" size="small" />
+        <ActivityIndicator color={REGISTRATION_COLORS.textoBlanco} size="small" />
       ) : (
         <>
           <Text style={styles.primaryButtonText}>Buscar paciente</Text>
-          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+          <Ionicons name="arrow-forward" size={18} color={REGISTRATION_COLORS.textoBlanco} />
         </>
       )}
     </TouchableOpacity>
@@ -211,7 +214,7 @@ const Step2Modality: React.FC<Step2ModalityProps> = ({
     <View style={styles.card}>
       <View style={styles.patientInfoBox}>
         <View style={styles.patientAvatar}>
-          <Ionicons name="person" size={22} color="#0F613B" />
+          <Ionicons name="person" size={22} color={REGISTRATION_COLORS.iconosPerfil} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.patientName}>
@@ -225,7 +228,7 @@ const Step2Modality: React.FC<Step2ModalityProps> = ({
 
       {Boolean(lookupData.hasTitular && lookupData.currentSpecialist) && (
         <View style={styles.titularAlertBox}>
-          <Ionicons name="shield-checkmark" size={20} color="#1D4ED8" />
+          <Ionicons name="shield-checkmark" size={20} color={REGISTRATION_COLORS.info} />
           <View style={{ flex: 1, marginLeft: 10 }}>
             <Text style={styles.titularAlertTitle}>Paciente con especialista asignado</Text>
             <Text style={styles.titularAlertText}>
@@ -237,7 +240,7 @@ const Step2Modality: React.FC<Step2ModalityProps> = ({
 
       {Boolean(lookupData.currentSuplente) && (
         <View style={styles.suplenteNoticeBox}>
-          <Ionicons name="time-outline" size={18} color="#D97706" />
+          <Ionicons name="time-outline" size={18} color={REGISTRATION_COLORS.warningBright} />
           <Text style={styles.suplenteNoticeText}>
             Suplencia actual: {lookupData.currentSuplente}
             {lookupData.suplenteInfo?.fecha_fin_suplencia
@@ -265,10 +268,10 @@ const Step2Modality: React.FC<Step2ModalityProps> = ({
       {selectedRelation === 'suplente' && (
         <View style={[styles.inputGroup, { marginTop: 12 }]}>
           <Text style={styles.label}>
-            Fecha de término de la suplencia <Text style={{ color: '#EF4444' }}>*</Text>
+            Fecha de término de la suplencia <Text style={{ color: REGISTRATION_COLORS.dangerBright }}>*</Text>
           </Text>
           <TouchableOpacity style={styles.dateSelector} onPress={onOpenDatePicker}>
-            <Ionicons name="calendar-outline" size={20} color="#0F613B" />
+            <Ionicons name="calendar-outline" size={20} color={REGISTRATION_COLORS.iconosPerfil} />
             <Text style={[styles.dateSelectorText, !endDateSuplencia && styles.placeholderText]}>
               {endDateSuplencia ? formatFullDateSpanish(endDateSuplencia) : 'Seleccionar fecha de término'}
             </Text>
@@ -291,7 +294,7 @@ const Step2Modality: React.FC<Step2ModalityProps> = ({
 
       <View style={styles.actionRow}>
         <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
-          <Ionicons name="arrow-back" size={18} color="#4B5563" />
+          <Ionicons name="arrow-back" size={18} color={REGISTRATION_COLORS.textoSecundario} />
           <Text style={styles.secondaryButtonText}>Volver</Text>
         </TouchableOpacity>
 
@@ -301,11 +304,11 @@ const Step2Modality: React.FC<Step2ModalityProps> = ({
           disabled={isSendingOtp}
         >
           {isSendingOtp ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
+            <ActivityIndicator color={REGISTRATION_COLORS.textoBlanco} size="small" />
           ) : (
             <>
               <Text style={styles.primaryButtonText}>Enviar Código</Text>
-              <Ionicons name="paper-plane" size={16} color="#FFFFFF" />
+              <Ionicons name="paper-plane" size={16} color={REGISTRATION_COLORS.textoBlanco} />
             </>
           )}
         </TouchableOpacity>
@@ -359,7 +362,7 @@ const Step3OtpSession: React.FC<Step3OtpSessionProps> = ({
 }) => (
   <View style={styles.card}>
     <View style={styles.otpBanner}>
-      <Ionicons name="mail-unread" size={22} color="#0F613B" />
+      <Ionicons name="mail-unread" size={22} color={REGISTRATION_COLORS.iconosPerfil} />
       <View style={{ flex: 1, marginLeft: 10 }}>
         <Text style={styles.otpBannerTitle}>Autorización requerida por Ley 21.719</Text>
         <Text style={styles.otpBannerText}>
@@ -370,12 +373,12 @@ const Step3OtpSession: React.FC<Step3OtpSessionProps> = ({
 
     <View style={styles.inputGroup}>
       <Text style={styles.label}>
-        Código de autorización (6 dígitos) <Text style={{ color: '#EF4444' }}>*</Text>
+        Código de autorización (6 dígitos) <Text style={{ color: REGISTRATION_COLORS.dangerBright }}>*</Text>
       </Text>
       <TextInput
         style={styles.otpInput}
         placeholder="000000"
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={REGISTRATION_COLORS.textoSecundario}
         value={otpCode}
         onChangeText={(text) => setOtpCode(text.replace(/\D/g, '').slice(0, 6))}
         keyboardType="number-pad"
@@ -392,7 +395,7 @@ const Step3OtpSession: React.FC<Step3OtpSessionProps> = ({
     <View style={styles.inputGroup}>
       <Text style={styles.label}>Fecha de la sesión</Text>
       <TouchableOpacity style={styles.dateSelector} onPress={onOpenDatePicker}>
-        <Ionicons name="calendar-outline" size={20} color="#0F613B" />
+        <Ionicons name="calendar-outline" size={20} color={REGISTRATION_COLORS.iconosPerfil} />
         <Text style={[styles.dateSelectorText, !firstSessionDate && styles.placeholderText]}>
           {firstSessionDate ? formatFullDateSpanish(firstSessionDate) : 'Seleccionar fecha'}
         </Text>
@@ -403,7 +406,7 @@ const Step3OtpSession: React.FC<Step3OtpSessionProps> = ({
       <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
         <Text style={styles.label}>Hora de inicio</Text>
         <TouchableOpacity style={styles.dateSelector} onPress={onOpenTimePicker}>
-          <Ionicons name="time-outline" size={20} color="#0F613B" />
+          <Ionicons name="time-outline" size={20} color={REGISTRATION_COLORS.iconosPerfil} />
           <Text style={styles.dateSelectorText}>{firstSessionTime}</Text>
         </TouchableOpacity>
       </View>
@@ -463,7 +466,7 @@ const Step3OtpSession: React.FC<Step3OtpSessionProps> = ({
       <TextInput
         style={[styles.textInput, { height: 70, textAlignVertical: 'top' }]}
         placeholder={`Primera sesión (${selectedRelation === 'suplente' ? 'Suplencia' : 'Titular'})`}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={REGISTRATION_COLORS.textoSecundario}
         value={firstSessionNotes}
         onChangeText={setFirstSessionNotes}
         multiline
@@ -472,7 +475,7 @@ const Step3OtpSession: React.FC<Step3OtpSessionProps> = ({
 
     <View style={styles.actionRow}>
       <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
-        <Ionicons name="arrow-back" size={18} color="#4B5563" />
+        <Ionicons name="arrow-back" size={18} color={REGISTRATION_COLORS.textoSecundario} />
         <Text style={styles.secondaryButtonText}>Volver</Text>
       </TouchableOpacity>
 
@@ -482,11 +485,11 @@ const Step3OtpSession: React.FC<Step3OtpSessionProps> = ({
         disabled={isSubmitting}
       >
         {isSubmitting ? (
-          <ActivityIndicator color="#FFFFFF" size="small" />
+          <ActivityIndicator color={REGISTRATION_COLORS.textoBlanco} size="small" />
         ) : (
           <>
             <Text style={styles.primaryButtonText}>Vincular y Agendar</Text>
-            <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+            <Ionicons name="checkmark-circle" size={18} color={REGISTRATION_COLORS.textoBlanco} />
           </>
         )}
       </TouchableOpacity>
@@ -855,6 +858,7 @@ export const VincularPacienteTab: React.FC<VincularPacienteTabProps> = ({
   );
 };
 
+// Estilos organizados por pasos del flujo de búsqueda y vinculación.
 const styles = StyleSheet.create({
   container: {
     padding: 16,
@@ -870,38 +874,38 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: REGISTRATION_COLORS.bordeIconos,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepDotActive: {
-    backgroundColor: '#0F613B',
+    backgroundColor: REGISTRATION_COLORS.iconosPerfil,
   },
   stepDotText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#6B7280',
+    color: REGISTRATION_COLORS.textoSecundario,
   },
   stepDotTextActive: {
-    color: '#FFFFFF',
+    color: REGISTRATION_COLORS.textoBlanco,
   },
   stepLine: {
     width: 40,
     height: 3,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: REGISTRATION_COLORS.bordeIconos,
     marginHorizontal: 4,
   },
   stepLineActive: {
-    backgroundColor: '#0F613B',
+    backgroundColor: REGISTRATION_COLORS.iconosPerfil,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: REGISTRATION_COLORS.surface,
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: REGISTRATION_COLORS.bordeIconos,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: REGISTRATION_COLORS.shadow,
     shadowOpacity: 0.05,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
@@ -910,7 +914,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: REGISTRATION_COLORS.surfaceGreenSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -918,12 +922,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: REGISTRATION_COLORS.textoPrincipal,
     marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: REGISTRATION_COLORS.textoSecundario,
     lineHeight: 20,
     marginBottom: 20,
   },
@@ -933,16 +937,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: REGISTRATION_COLORS.textoSecundario,
     marginBottom: 6,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: REGISTRATION_COLORS.bordeIconos,
     borderRadius: 10,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: REGISTRATION_COLORS.surfaceGreenSoft,
     paddingHorizontal: 12,
   },
   inputIcon: {
@@ -952,28 +956,28 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     fontSize: 15,
-    color: '#111827',
+    color: REGISTRATION_COLORS.textoPrincipal,
   },
   otpInput: {
     height: 56,
     borderWidth: 2,
-    borderColor: '#0F613B',
+    borderColor: REGISTRATION_COLORS.iconosPerfil,
     borderRadius: 12,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: REGISTRATION_COLORS.surfaceGreenSoft,
     textAlign: 'center',
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: 10,
-    color: '#0F613B',
+    color: REGISTRATION_COLORS.iconosPerfil,
   },
   resendText: {
     fontSize: 13,
-    color: '#0F613B',
+    color: REGISTRATION_COLORS.iconosPerfil,
     fontWeight: '600',
   },
   primaryButton: {
     height: 48,
-    backgroundColor: '#0F613B',
+    backgroundColor: REGISTRATION_COLORS.iconosPerfil,
     borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
@@ -984,24 +988,24 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: REGISTRATION_COLORS.textoBlanco,
   },
   secondaryButton: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: REGISTRATION_COLORS.bordeIconos,
     borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
     gap: 6,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: REGISTRATION_COLORS.surfaceGreenSoft,
   },
   secondaryButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4B5563',
+    color: REGISTRATION_COLORS.textoSecundario,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -1016,14 +1020,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: REGISTRATION_COLORS.fondoiconos,
     marginBottom: 12,
   },
   patientAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: REGISTRATION_COLORS.surfaceGreenSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -1031,11 +1035,11 @@ const styles = StyleSheet.create({
   patientName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: REGISTRATION_COLORS.textoPrincipal,
   },
   patientSub: {
     fontSize: 13,
-    color: '#6B7280',
+    color: REGISTRATION_COLORS.textoSecundario,
     marginTop: 2,
   },
   titularAlertBox: {
@@ -1043,19 +1047,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: 10,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: REGISTRATION_COLORS.infoSurface,
     borderLeftWidth: 4,
-    borderLeftColor: '#3B82F6',
+    borderLeftColor: REGISTRATION_COLORS.infoBlueBright,
     marginBottom: 10,
   },
   titularAlertTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1E40AF',
+    color: REGISTRATION_COLORS.textInfoStrong,
   },
   titularAlertText: {
     fontSize: 13,
-    color: '#1E3A8A',
+    color: REGISTRATION_COLORS.textInfoDark,
     marginTop: 2,
   },
   suplenteNoticeBox: {
@@ -1063,13 +1067,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     borderRadius: 8,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: REGISTRATION_COLORS.warningSurface,
     marginBottom: 10,
     gap: 8,
   },
   suplenteNoticeText: {
     fontSize: 12,
-    color: '#92400E',
+    color: REGISTRATION_COLORS.textWarningStrong,
     fontWeight: '600',
     flex: 1,
   },
@@ -1077,12 +1081,12 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#FAFAFA',
+    borderColor: REGISTRATION_COLORS.bordeIconos,
+    backgroundColor: REGISTRATION_COLORS.fondoBase,
   },
   modeCardSelected: {
-    borderColor: '#0F613B',
-    backgroundColor: '#F0FDF4',
+    borderColor: REGISTRATION_COLORS.iconosPerfil,
+    backgroundColor: REGISTRATION_COLORS.surfaceGreenSoft,
   },
   modeCardHeader: {
     flexDirection: 'row',
@@ -1094,29 +1098,29 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     borderWidth: 2,
-    borderColor: '#9CA3AF',
+    borderColor: REGISTRATION_COLORS.textoSecundario,
     marginRight: 8,
   },
   radioDotActive: {
-    borderColor: '#0F613B',
-    backgroundColor: '#0F613B',
+    borderColor: REGISTRATION_COLORS.iconosPerfil,
+    backgroundColor: REGISTRATION_COLORS.iconosPerfil,
   },
   modeCardTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#111827',
+    color: REGISTRATION_COLORS.textoPrincipal,
   },
   modeCardDesc: {
     fontSize: 13,
-    color: '#4B5563',
+    color: REGISTRATION_COLORS.textoSecundario,
     lineHeight: 18,
   },
   dateSelector: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: REGISTRATION_COLORS.bordeIconos,
     borderRadius: 10,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: REGISTRATION_COLORS.surfaceGreenSoft,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
@@ -1124,40 +1128,40 @@ const styles = StyleSheet.create({
   },
   dateSelectorText: {
     fontSize: 14,
-    color: '#111827',
+    color: REGISTRATION_COLORS.textoPrincipal,
     fontWeight: '500',
   },
   placeholderText: {
-    color: '#9CA3AF',
+    color: REGISTRATION_COLORS.textoSecundario,
   },
   otpBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
     borderRadius: 10,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: REGISTRATION_COLORS.surfaceGreenSoft,
     marginBottom: 16,
   },
   otpBannerTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F613B',
+    color: REGISTRATION_COLORS.iconosPerfil,
   },
   otpBannerText: {
     fontSize: 13,
-    color: '#166534',
+    color: REGISTRATION_COLORS.textGreenSuccess,
     marginTop: 2,
     lineHeight: 18,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: REGISTRATION_COLORS.bordeIconos,
     marginVertical: 18,
   },
   sectionHeaderTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: REGISTRATION_COLORS.textoPrincipal,
     marginBottom: 14,
   },
   row: {
@@ -1168,7 +1172,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     height: 48,
     borderRadius: 10,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: REGISTRATION_COLORS.fondoiconos,
     padding: 4,
   },
   modalityBtn: {
@@ -1178,15 +1182,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalityBtnActive: {
-    backgroundColor: '#0F613B',
+    backgroundColor: REGISTRATION_COLORS.iconosPerfil,
   },
   modalityBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#4B5563',
+    color: REGISTRATION_COLORS.textoSecundario,
   },
   modalityBtnTextActive: {
-    color: '#FFFFFF',
+    color: REGISTRATION_COLORS.textoBlanco,
   },
   durationRow: {
     flexDirection: 'row',
@@ -1198,21 +1202,21 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    backgroundColor: '#F9FAFB',
+    borderColor: REGISTRATION_COLORS.bordeIconos,
+    backgroundColor: REGISTRATION_COLORS.surfaceGreenSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   durBtnActive: {
-    borderColor: '#0F613B',
-    backgroundColor: '#0F613B',
+    borderColor: REGISTRATION_COLORS.iconosPerfil,
+    backgroundColor: REGISTRATION_COLORS.iconosPerfil,
   },
   durBtnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4B5563',
+    color: REGISTRATION_COLORS.textoSecundario,
   },
   durBtnTextActive: {
-    color: '#FFFFFF',
+    color: REGISTRATION_COLORS.textoBlanco,
   },
 });

@@ -20,6 +20,9 @@ import { authService } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 import { AppointmentSession } from '../../types/patient';
 import { formatToChileanDate } from '../../utils/date';
+import { PSYCHOLOGIST_COLORS } from './psychologistColors';
+
+const CALENDAR_COLORS = PSYCHOLOGIST_COLORS.calendario;
 
 interface PsychologistCalendarScreenProps {
   doctorName?: string;
@@ -39,6 +42,8 @@ const HOURS_LIST = [
   '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00',
 ];
 
+
+
 /**
  * Formatea una fecha en formato local 'YYYY-MM-DD'
  */
@@ -48,6 +53,8 @@ const formatLocalDate = (d: Date): string => {
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
+
 
 /**
  * Retorna los 7 días (Lunes a Domingo) de la semana que contiene a baseDate
@@ -129,6 +136,8 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
 
+
+
   // Fecha del primer ingreso del psicólogo en la app
   const [minCalendarDate, setMinCalendarDate] = useState<Date | null>(() => {
     return parseEntryDate(user?.fechaIngreso);
@@ -155,6 +164,8 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
     };
   }, []);
 
+
+
   // Fecha base para la semana y fecha seleccionada (por defecto: HOY)
   const todayDate = useMemo(() => new Date(), []);
   const todayDateStr = useMemo(() => formatLocalDate(todayDate), [todayDate]);
@@ -167,8 +178,10 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
   const [refreshing, setRefreshing] = useState(false);
   const [showMonthPickerModal, setShowMonthPickerModal] = useState(false);
 
+
   // Calcula los 7 días de la semana visible
   const weekDays = useMemo(() => getWeekDays(baseDate), [baseDate]);
+
 
   // Mes y año de referencia para la cabecera (usando el día seleccionado o la base)
   const activeDateObj = useMemo(() => {
@@ -182,6 +195,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
   const currentYear = activeDateObj.getFullYear();
   const currentMonth = activeDateObj.getMonth();
 
+
   // Meses involucrados en la semana para consultar citas completas
   const monthsInWeek = useMemo(() => {
     const set = new Set<string>();
@@ -192,6 +206,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
     return Array.from(set);
   }, [weekDays]);
 
+
   // Cargar citas para los meses cubiertos por la semana visible
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
@@ -200,6 +215,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
         monthsInWeek.map((m) => appointmentService.getPsychologistCalendar({ month: m }))
       );
       const allResults = resultsByMonth.flat();
+
 
       // Eliminar duplicados si alguna cita coincidió
       const uniqueMap = new Map<string, AppointmentSession>();
@@ -222,6 +238,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
     setRefreshing(false);
   };
 
+
   // Botón rápido para volver a HOY
   const handleGoToToday = () => {
     const now = new Date();
@@ -229,12 +246,14 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
     setSelectedDateStr(formatLocalDate(now));
   };
 
+
   // Selección directa desde el modal de calendario completo
   const handleSelectCustomDate = (formattedDate: string, dateObj: Date) => {
     setSelectedDateStr(formattedDate);
     setBaseDate(dateObj);
     setShowMonthPickerModal(false);
   };
+
 
   // Fechas que tienen citas (para los puntos en el calendario mensual)
   const datesWithAppointments = useMemo(() => {
@@ -247,12 +266,14 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
     return set;
   }, [appointments]);
 
+
   // Citas del día actualmente seleccionado (solo citas activas / no canceladas)
   const dayAppointments = useMemo(() => {
     return appointments
       .filter((a) => a.fecha === selectedDateStr && a.estado !== 'Cancelada')
       .sort((a, b) => a.hora.localeCompare(b.hora));
   }, [appointments, selectedDateStr]);
+
 
   // Mapeo de citas por hora para la vista de timeline
   const appointmentsByHour = useMemo(() => {
@@ -283,7 +304,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#0F613B" />
+          <ActivityIndicator size="small" color={CALENDAR_COLORS.primary} />
           <Text style={styles.loadingText}>Cargando agenda de la semana...</Text>
         </View>
       );
@@ -293,7 +314,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
       return (
         <View style={styles.emptyDayContainer}>
           <View style={styles.emptyIconCircle}>
-            <Ionicons name="time-outline" size={32} color="#0F613B" />
+            <Ionicons name="time-outline" size={32} color={CALENDAR_COLORS.iconosPerfil} />
           </View>
           <Text style={styles.emptyTitle}>Sin sesiones programadas</Text>
           <Text style={styles.emptySubtitle}>
@@ -337,10 +358,11 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
                         apt.modalidad === 'online' ? styles.sessionCardOnline : styles.sessionCardPresencial,
                       ]}
                     >
+
                       {/* Cabecera de la cita */}
                       <View style={styles.sessionHeaderRow}>
                         <View style={styles.timeDurationPill}>
-                          <Ionicons name="time" size={13} color="#0F613B" style={{ marginRight: 4 }} />
+                          <Ionicons name="time" size={13} color={CALENDAR_COLORS.iconosPerfil} style={{ marginRight: 4 }} />
                           <Text style={styles.timeDurationText}>
                             {apt.hora} {apt.horaFin ? `- ${apt.horaFin}` : ''} ({apt.duracion} min)
                           </Text>
@@ -355,7 +377,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
                           <Ionicons
                             name={apt.modalidad === 'online' ? 'videocam' : 'business'}
                             size={12}
-                            color={apt.modalidad === 'online' ? '#2563EB' : '#0F613B'}
+                            color={CALENDAR_COLORS.iconosPerfil}
                             style={{ marginRight: 4 }}
                           />
                           <Text
@@ -369,6 +391,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
                         </View>
                       </View>
 
+
                       {/* Nombre del Paciente con recordatorio de Suplencia si aplica */}
                       <View style={styles.patientRowWithBadge}>
                         <Text
@@ -381,7 +404,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
                         </Text>
                         {apt.rol_psicologo === 'suplente' && (
                           <View style={styles.suplenteRoleBadge}>
-                            <Ionicons name="repeat" size={11} color="#1D4ED8" style={{ marginRight: 3 }} />
+                            <Ionicons name="repeat" size={11} color={CALENDAR_COLORS.info} style={{ marginRight: 3 }} />
                             <Text style={styles.suplenteRoleBadgeText}>Suplencia</Text>
                           </View>
                         )}
@@ -389,11 +412,12 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
                           <Ionicons
                             name="chevron-forward"
                             size={15}
-                            color="#9CA3AF"
+                            color={CALENDAR_COLORS.iconosPerfil}
                             style={{ marginLeft: 4 }}
                           />
                         )}
                       </View>
+
 
                       {/* Observaciones */}
                       {apt.observaciones ? (
@@ -401,7 +425,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
                           <Ionicons
                             name="document-text-outline"
                             size={13}
-                            color="#4B5563"
+                            color={CALENDAR_COLORS.textSecondary}
                             style={{ marginRight: 4, marginTop: 1 }}
                           />
                           <Text style={styles.notesText} numberOfLines={2}>
@@ -445,9 +469,6 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
       <View style={styles.topBar}>
         <View style={{ flex: 1 }}>
           <Text style={styles.topBarTag}>CALENDARIO CLÍNICO</Text>
-          <Text style={styles.topBarTitle} numberOfLines={1}>
-            {doctorName}
-          </Text>
         </View>
 
         <View style={styles.topBarActions}>
@@ -458,7 +479,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
               onPress={handleGoToToday}
               activeOpacity={0.8}
             >
-              <Ionicons name="today-outline" size={14} color="#0F613B" style={{ marginRight: 4 }} />
+              <Ionicons name="today-outline" size={14} color={CALENDAR_COLORS.iconosPerfil} style={{ marginRight: 4 }} />
               <Text style={styles.todayButtonText}>Hoy</Text>
             </TouchableOpacity>
           )}
@@ -472,9 +493,10 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0F613B']} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[CALENDAR_COLORS.primary]} />
         }
       >
+
         {/* Selector de Mes Desplegable */}
         <View style={styles.weekNavHeader}>
           <TouchableOpacity
@@ -482,13 +504,14 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
             onPress={() => setShowMonthPickerModal(true)}
             activeOpacity={0.8}
           >
-            <Ionicons name="calendar" size={17} color="#0F613B" style={{ marginRight: 6 }} />
+            <Ionicons name="calendar" size={17} color={CALENDAR_COLORS.iconosPerfil} style={{ marginRight: 6 }} />
             <Text style={styles.monthDropdownText}>
               {MONTH_NAMES[currentMonth]} {currentYear}
             </Text>
-            <Ionicons name="chevron-down" size={15} color="#4B5563" style={{ marginLeft: 6 }} />
+            <Ionicons name="chevron-down" size={17} color={CALENDAR_COLORS.iconosPerfil} style={{ marginLeft: 10 }} />
           </TouchableOpacity>
         </View>
+
 
         {/* Fila de los 7 días de la semana (Lunes a Domingo) */}
         <View style={styles.weekStripContainer}>
@@ -509,9 +532,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
                   ]}
                 />
               );
-            } else if (day.isToday && !isSelected) {
-              dayIndicator = <View style={styles.todaySmallDot} />;
-            }
+            } 
 
             return (
               <TouchableOpacity
@@ -546,6 +567,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
                   {day.dayNum}
                 </Text>
 
+
                 {/* Indicador de citas o badge de hoy */}
                 <View style={styles.indicatorsRow}>
                   {dayIndicator}
@@ -554,6 +576,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
             );
           })}
         </View>
+
 
         {/* Resumen del Día Seleccionado */}
         <View style={styles.daySummaryBar}>
@@ -570,9 +593,11 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
           </View>
         </View>
 
+
         {/* Timeline del Día Seleccionado */}
         {renderTimelineContent()}
       </ScrollView>
+
 
       {/* Modal Desplegable con Cuadrícula Completa de Mes (bloqueando años anteriores al ingreso) */}
       <DatePickerModal
@@ -585,6 +610,7 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
         onSelectDate={handleSelectCustomDate}
       />
 
+
       {/* Barra de Navegación Inferior */}
       <PsychologistBottomNav
         activeTab="calendario"
@@ -594,316 +620,340 @@ export const PsychologistCalendarScreen: React.FC<PsychologistCalendarScreenProp
   );
 };
 
+// ESTILOS DE CALENDARIO
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAF9',
+    backgroundColor: CALENDAR_COLORS.fondoBase,
   },
+
+   //COMIENZO DE CALENDARIO SIN CITA
+
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EDF2F7',
+    paddingVertical: 30,
+    backgroundColor: CALENDAR_COLORS.fondoBase,
   },
+
   topBarTag: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#0F613B',
-    letterSpacing: 0.8,
+    fontSize: 13,
+    fontWeight: '600',
+    color: CALENDAR_COLORS.textoPrincipal,
+    letterSpacing: 0.6,
   },
-  topBarTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#111827',
-    marginTop: 2,
-  },
+
+  
   topBarActions: {
+    marginTop: 4,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+
   todayButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EAF5EE',
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: CALENDAR_COLORS.bordeIconos,
   },
+
   todayButtonText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#0F613B',
+    color: CALENDAR_COLORS.textoSecundario,
   },
-  iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
   scrollContent: {
     flexGrow: 1,
   },
+
   weekNavHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    paddingHorizontal: 20,
+    paddingVertical: 0,
+    backgroundColor: CALENDAR_COLORS.fondoBase,
   },
+
   dayCardDisabled: {
     opacity: 0.35,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: CALENDAR_COLORS.surfaceMuted,
   },
+
   monthDropdownButton: {
+  
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    paddingHorizontal: 14,
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
+    paddingHorizontal: 20,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: CALENDAR_COLORS.bordeIconos,
+    marginBottom: 10,
   },
+
   monthDropdownText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#111827',
+    fontSize: 14,
+    fontWeight: '600',
+    color: CALENDAR_COLORS.textoSecundario,
   },
+
   weekStripContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EDF2F7',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: CALENDAR_COLORS.fondoBase,
   },
+
   dayCard: {
     flex: 1,
     maxWidth: 48,
-    height: 68,
-    borderRadius: 13,
-    backgroundColor: '#F9FAFB',
+    height: 60,
+    borderRadius: 10,
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: CALENDAR_COLORS.bordeIconos,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 4,
-    marginHorizontal: 2,
+    marginHorizontal: 3,
   },
+
   dayCardActive: {
-    backgroundColor: '#0F613B',
-    borderColor: '#0F613B',
-    shadowColor: '#0F613B',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: CALENDAR_COLORS.iconosPerfil,
+    borderColor: CALENDAR_COLORS.bordeIconos,    
+    elevation: 1,
   },
+
   dayCardToday: {
-    borderColor: '#0F613B',
+    borderColor: CALENDAR_COLORS.iconosPerfil,
     borderWidth: 1.5,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
   },
+
   dayNameText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#6B7280',
+    color: CALENDAR_COLORS.textoSecundario,
     marginBottom: 3,
   },
+
   dayNameTextActive: {
-    color: '#D1FAE5',
+    color: CALENDAR_COLORS.textoBlanco,
   },
+
   dayNameTextToday: {
-    color: '#0F613B',
-    fontWeight: '700',
+    color: CALENDAR_COLORS.iconosPerfil,
+    fontWeight: '800',
   },
+
   dayNumText: {
-    fontSize: 16.5,
-    fontWeight: '700',
-    color: '#111827',
+    fontSize: 15,
+    fontWeight: '600',
+    color: CALENDAR_COLORS.textoSecundario,
   },
+
   dayNumTextActive: {
-    color: '#FFFFFF',
+    color: CALENDAR_COLORS.textoBlanco,
   },
+  
   dayNumTextToday: {
-    color: '#0F613B',
+    color: CALENDAR_COLORS.iconosPerfil,
   },
+
   indicatorsRow: {
     height: 6,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 3,
   },
+
   dotIndicator: {
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#0F613B',
+    backgroundColor: CALENDAR_COLORS.iconosPerfil,
   },
+
   dotIndicatorActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: CALENDAR_COLORS.surface,
   },
-  todaySmallDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#10B981',
-  },
+  
   dotPlaceholder: {
     width: 5,
     height: 5,
   },
+
   daySummaryBar: {
+    
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#F3F4F6',
+    paddingVertical: 0,
+    backgroundColor: CALENDAR_COLORS.fondoBase,
   },
+
   daySummaryFullDate: {
-    fontSize: 13.5,
+    marginTop: 20,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#1F2937',
+    color: CALENDAR_COLORS.textoSecundario,
   },
-  todayLabelText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#0F613B',
-    marginTop: 1,
-  },
+
   daySummaryBadge: {
-    backgroundColor: '#EAF5EE',
+    marginTop: 20,
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: CALENDAR_COLORS.bordeIconos,
   },
-  daySummaryBadgeText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: '#0F613B',
+
+  daySummaryBadgeText: {   
+    fontSize: 12,
+    fontWeight: '600',
+    color: CALENDAR_COLORS.iconosPerfil,
   },
+
   loadingContainer: {
     paddingVertical: 40,
     alignItems: 'center',
   },
+
   loadingText: {
     marginTop: 8,
     fontSize: 13,
-    color: '#6B7280',
+    color: CALENDAR_COLORS.textoSecundario,
   },
+
   emptyDayContainer: {
     margin: 20,
     padding: 28,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: CALENDAR_COLORS.bordeIconos,
   },
+
   emptyIconCircle: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     borderRadius: 30,
-    backgroundColor: '#EAF5EE',
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
+
   emptyTitle: {
-    fontSize: 15.5,
-    fontWeight: '700',
-    color: '#111827',
+    fontSize: 15,
+    fontWeight: '600',
+    color: CALENDAR_COLORS.textoPrincipal,
     marginBottom: 6,
   },
+
   emptySubtitle: {
     fontSize: 13,
-    color: '#6B7280',
+    color: CALENDAR_COLORS.textoSecundario,
     textAlign: 'center',
     lineHeight: 19,
   },
+
+
+  //FIN DE CALENDARIO SIN CITA
+
+
+
+  //INICIO DE CALENDARIO CON CITA
+
   timelineContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: 20,
+    paddingTop: 30,
   },
+
   timelineRow: {
     flexDirection: 'row',
     marginBottom: 10,
   },
+
   hourCol: {
-    width: 48,
-    paddingTop: 2,
+    width: 40,
+    paddingTop: 0,
   },
+  
   hourText: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#6B7280',
+    color: CALENDAR_COLORS.textoSecundario,
   },
+
   eventsCol: {
     flex: 1,
-    paddingLeft: 8,
+    paddingLeft: 4,
   },
+
   hourDivider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
-    marginBottom: 8,
-  },
-  sessionCard: {
-    borderRadius: 14,
-    padding: 14,
+    backgroundColor: CALENDAR_COLORS.bordeIconos,
     marginBottom: 10,
-    backgroundColor: '#FFFFFF',
-    borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+  },
+
+  sessionCard: {
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 6,
+    backgroundColor: CALENDAR_COLORS.fondoBase,
+    borderLeftWidth: 4,  
     elevation: 1,
   },
+
   sessionCardPresencial: {
-    borderLeftColor: '#0F613B',
-    borderColor: '#E5E7EB',
+    borderLeftColor: CALENDAR_COLORS.iconosPerfil,
+    borderColor: CALENDAR_COLORS.iconosPerfil,
     borderWidth: 1,
   },
+
   sessionCardOnline: {
-    borderLeftColor: '#2563EB',
-    borderColor: '#E5E7EB',
+    borderLeftColor: CALENDAR_COLORS.iconosPerfil,
+    borderColor: CALENDAR_COLORS.iconosPerfil,
     borderWidth: 1,
   },
+
   sessionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
   },
+
   timeDurationPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    
   },
+
   timeDurationText: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#374151',
+    color: CALENDAR_COLORS.textoHora,
   },
+
   modalityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -911,22 +961,28 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 6,
   },
+  
   modalityBadgePresencial: {
-    backgroundColor: '#EAF5EE',
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
   },
+
   modalityBadgeOnline: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
   },
+
   modalityBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
+
   modalityBadgeTextPresencial: {
-    color: '#0F613B',
+    color: CALENDAR_COLORS.iconosPerfil,
   },
+
   modalityBadgeTextOnline: {
-    color: '#2563EB',
+    color: CALENDAR_COLORS.iconosPerfil,
   },
+
   patientRowWithBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -934,76 +990,91 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 4,
   },
+
   patientNameText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#111827',
+    fontSize: 14,
+    fontWeight: '600',
+    color: CALENDAR_COLORS.textoSecundario,
     flex: 1,
   },
+
   patientNameCancelled: {
-    color: '#9CA3AF',
+    color: CALENDAR_COLORS.textoSecundario,
     textDecorationLine: 'line-through',
   },
+
   suplenteRoleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
+    backgroundColor: CALENDAR_COLORS.infoSurface,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: CALENDAR_COLORS.infoBorder,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
   },
+
   suplenteRoleBadgeText: {
     fontSize: 10.5,
     fontWeight: '700',
-    color: '#1D4ED8',
+    color: CALENDAR_COLORS.info,
   },
+
   notesRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: CALENDAR_COLORS.surfaceSubtle,
     padding: 8,
     borderRadius: 8,
     marginTop: 4,
     marginBottom: 6,
   },
+
   notesText: {
     flex: 1,
     fontSize: 12,
-    color: '#4B5563',
+    color: CALENDAR_COLORS.textoSecundario,
     lineHeight: 16,
   },
+
   sessionFooterRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 2,
   },
+
   statusPill: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
+
   statusPillScheduled: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
   },
+
   statusPillCompleted: {
-    backgroundColor: '#EAF5EE',
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
   },
+
   statusPillCancelled: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: CALENDAR_COLORS.fondoiconos,
   },
+
   statusPillText: {
     fontSize: 10.5,
     fontWeight: '600',
   },
   statusPillTextScheduled: {
-    color: '#92400E',
+    color: CALENDAR_COLORS.estadoReagendar,
   },
+
   statusPillTextCompleted: {
-    color: '#0F613B',
+    color: CALENDAR_COLORS.estadoCompletada,
   },
+
   statusPillTextCancelled: {
-    color: '#DC2626',
+    color: CALENDAR_COLORS.estadoCancelada,
   },
+
 });

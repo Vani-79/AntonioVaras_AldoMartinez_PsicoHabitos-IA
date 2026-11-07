@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +23,11 @@ import { formatToChileanDate } from '../../utils/date';
 import { useNavigation } from '@react-navigation/native';
 import { PsychologistNavigationProp, HabitReportFilters } from '../../navigation/types';
 import { HabitFilterModal } from '../../components/HabitFilterModal';
+import { HopeSessionsModal } from './components/HopeSessionsModal';
+import { PSYCHOLOGIST_COLORS } from './psychologistColors';
+
+const PATIENTS_COLORS = PSYCHOLOGIST_COLORS.pacientes;
+const PROFILE_COLORS = PSYCHOLOGIST_COLORS.perfil;
 
 type Duracion = '30' | '45' | '60' | '75' | '90';
 type Modalidad = 'presencial' | 'online';
@@ -177,7 +183,7 @@ const PatientRoleBanners: React.FC<{ patient: MySqlPatientRecord }> = ({ patient
       {patient.tipo_relacion === 'suplente' && (
         <View style={styles.suplenteBanner}>
           <View style={styles.suplenteBannerHeader}>
-            <Ionicons name="shield-checkmark" size={18} color="#1E40AF" />
+            <Ionicons name="shield-checkmark" size={18} color={PATIENTS_COLORS.textInfoStrong} />
             <Text style={styles.suplenteBannerTitle}>Atendiendo como Psicólogo Suplente</Text>
           </View>
           <Text style={styles.suplenteBannerText}>
@@ -195,7 +201,7 @@ const PatientRoleBanners: React.FC<{ patient: MySqlPatientRecord }> = ({ patient
       {patient.tipo_relacion === 'titular' && patient.suplente_activo && (
         <View style={styles.titularSuplenciaBanner}>
           <View style={styles.suplenteBannerHeader}>
-            <Ionicons name="information-circle" size={18} color="#92400E" />
+            <Ionicons name="information-circle" size={18} color={PATIENTS_COLORS.textWarningStrong} />
             <Text style={styles.titularBannerTitle}>Cobertura de Suplencia Activa</Text>
           </View>
           <Text style={styles.titularBannerText}>
@@ -210,7 +216,7 @@ const PatientRoleBanners: React.FC<{ patient: MySqlPatientRecord }> = ({ patient
           <Text
             style={[
               styles.titularBannerText,
-              { marginTop: 4, fontStyle: 'italic', color: '#78350F' },
+              { marginTop: 4, fontStyle: 'italic', color: PATIENTS_COLORS.textWarningDark },
             ]}
           >
             Nota: La revocación o término anticipado de la suplencia es una decisión exclusiva del
@@ -224,10 +230,17 @@ const PatientRoleBanners: React.FC<{ patient: MySqlPatientRecord }> = ({ patient
 
 const PatientInfoCard: React.FC<{ patient: MySqlPatientRecord }> = ({ patient }) => (
   <View style={styles.infoCard}>
-    <Text style={styles.infoText}>{patient.edad} años</Text>
-    <Text style={styles.infoText}>Correo: {patient.email}</Text>
-    <Text style={styles.infoText}>
-      Primera sesión: {formatToChileanDate(patient.fecha_primera_sesion) || 'No registrada'}
+    <Text style={styles.infoLabel}>
+      Nombre: <Text style={styles.infoValue}>{patient.nombre} {patient.apellido_paterno} {patient.apellido_materno}</Text>
+    </Text>
+    <Text style={styles.infoLabel}>
+      Edad: <Text style={styles.infoValue}>{patient.edad} años</Text>
+    </Text>
+    <Text style={styles.infoLabel}>
+      Correo electrónico: <Text style={styles.infoValue}>{patient.email}</Text>
+    </Text>
+    <Text style={styles.infoLabel}>
+      Fecha primera sesión: <Text style={styles.infoValue}>{formatToChileanDate(patient.fecha_primera_sesion) || 'No registrada'}</Text>
     </Text>
   </View>
 );
@@ -246,86 +259,89 @@ const SessionItemCard: React.FC<SessionItemCardProps> = ({ session, onEdit }) =>
 
   return (
     <View style={[styles.sessionCard, isCancelada && styles.sessionCardCancelled]}>
-      <View style={{ flex: 1 }}>
+      {/* Fila superior: Fecha, Hora y Modalidad (con flex: 1 para salto de línea seguro) + Estado a la derecha */}
+      <View style={styles.sessionCardHeaderRow}>
         <Text style={[styles.sessionDate, isCancelada && styles.sessionDateCancelled]}>
           {formatToChileanDate(session.fecha)} · {session.hora}{' '}
           {session.horaFin ? `- ${session.horaFin}` : ''} ·{' '}
           {session.modalidad === 'presencial' ? 'Presencial' : 'Online'}
         </Text>
 
-        {session.doctorNombre && (
-          <View style={styles.doctorBadgeRow}>
-            <Ionicons
-              name="shield-checkmark-outline"
-              size={12}
-              color="#6B7280"
-              style={{ marginRight: 4 }}
-            />
-            <Text style={styles.doctorBadgeText}>
-              {session.doctorNombre}
-              {doctorSuffix}
-            </Text>
-          </View>
-        )}
-
-        {session.observaciones ? (
-          <Text style={[styles.sessionMotivo, isCancelada && styles.sessionMotivoCancelled]}>
-            {session.observaciones}
-          </Text>
-        ) : (
-          <Text style={[styles.sessionMotivo, { fontStyle: 'italic', color: '#9CA3AF' }]}>
-            Sin observaciones registradas
-          </Text>
-        )}
-      </View>
-
-      <View style={styles.sessionCardRightCol}>
-        <View
-          style={[
-            styles.statusBadge,
-            isCompletada && styles.statusBadgeCompleted,
-            isCancelada && styles.statusBadgeCancelled,
-          ]}
-        >
-          <Text
+        <View style={styles.sessionCardRightCol}>
+          <View
             style={[
-              styles.statusBadgeText,
-              isCompletada && styles.statusBadgeTextCompleted,
-              isCancelada && styles.statusBadgeTextCancelled,
+              styles.statusBadge,
+              isCompletada && styles.statusBadgeCompleted,
+              isCancelada && styles.statusBadgeCancelled,
             ]}
           >
-            {statusLabel}
+            <Text
+              style={[
+                styles.statusBadgeText,
+                isCompletada && styles.statusBadgeTextCompleted,
+                isCancelada && styles.statusBadgeTextCancelled,
+              ]}
+            >
+              {statusLabel}
+            </Text>
+          </View>
+
+          {isProgramada && (
+            session.esPropia !== false ? (
+              <TouchableOpacity
+                style={styles.manageButton}
+                onPress={() => onEdit(session)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="create-outline"
+                  size={13}
+                  color={PATIENTS_COLORS.iconosPerfil}
+                  style={{ marginRight: 3 }}
+                />
+                <Text style={styles.manageButtonText}>Modificar</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.readOnlyBadge}>
+                <Ionicons
+                  name="lock-closed"
+                  size={11}
+                  color={PATIENTS_COLORS.textoSecundario}
+                  style={{ marginRight: 3 }}
+                />
+                <Text style={styles.readOnlyBadgeText}>Solo lectura</Text>
+              </View>
+            )
+          )}
+        </View>
+      </View>
+
+      {/* Fila del especialista: Ancho completo sin colisiones */}
+      {session.doctorNombre && (
+        <View style={styles.doctorBadgeRow}>
+          <Ionicons
+            name="shield-checkmark-outline"
+            size={12}
+            color={PATIENTS_COLORS.textoSecundario}
+            style={{ marginRight: 4 }}
+          />
+          <Text style={styles.doctorBadgeText}>
+            {session.doctorNombre}
+            {doctorSuffix}
           </Text>
         </View>
+      )}
 
-        {isProgramada && (
-          session.esPropia !== false ? (
-            <TouchableOpacity
-              style={styles.manageButton}
-              onPress={() => onEdit(session)}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="create-outline"
-                size={13}
-                color="#0F613B"
-                style={{ marginRight: 3 }}
-              />
-              <Text style={styles.manageButtonText}>Modificar</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.readOnlyBadge}>
-              <Ionicons
-                name="lock-closed"
-                size={11}
-                color="#6B7280"
-                style={{ marginRight: 3 }}
-              />
-              <Text style={styles.readOnlyBadgeText}>Solo lectura</Text>
-            </View>
-          )
-        )}
-      </View>
+      {/* Observaciones: Ancho completo */}
+      {session.observaciones ? (
+        <Text style={[styles.sessionMotivo, isCancelada && styles.sessionMotivoCancelled]}>
+          {session.observaciones}
+        </Text>
+      ) : (
+        <Text style={[styles.sessionMotivo, { fontStyle: 'italic', color: PATIENTS_COLORS.textoSecundario }]}>
+          Sin observaciones registradas
+        </Text>
+      )}
     </View>
   );
 };
@@ -354,7 +370,7 @@ const SessionPagination: React.FC<SessionPaginationProps> = ({
         <Ionicons
           name="chevron-back"
           size={18}
-          color={currentPage === 0 ? '#CBD5E1' : '#0F613B'}
+          color={currentPage === 0 ? PATIENTS_COLORS.bordeIconos : PATIENTS_COLORS.iconosPerfil}
         />
         <Text style={[styles.pageButtonText, currentPage === 0 && styles.pageButtonTextDisabled]}>
           Anterior
@@ -385,7 +401,7 @@ const SessionPagination: React.FC<SessionPaginationProps> = ({
         <Ionicons
           name="chevron-forward"
           size={18}
-          color={currentPage >= totalPages - 1 ? '#CBD5E1' : '#0F613B'}
+          color={currentPage >= totalPages - 1 ? PATIENTS_COLORS.bordeIconos : PATIENTS_COLORS.iconosPerfil}
         />
       </TouchableOpacity>
     </View>
@@ -418,8 +434,8 @@ const SessionsHistorySection: React.FC<SessionsHistorySectionProps> = ({
     if (loading) {
       return (
         <View style={{ paddingVertical: 24, alignItems: 'center' }}>
-          <ActivityIndicator size="small" color="#0F613B" />
-          <Text style={{ marginTop: 8, color: '#6B7280', fontSize: 13 }}>
+          <ActivityIndicator size="small" color={PATIENTS_COLORS.iconosPerfil} />
+          <Text style={{ marginTop: 8, color: PATIENTS_COLORS.textoSecundario, fontSize: 13 }}>
             Cargando sesiones...
           </Text>
         </View>
@@ -429,7 +445,7 @@ const SessionsHistorySection: React.FC<SessionsHistorySectionProps> = ({
     if (sessions.length === 0) {
       return (
         <View style={styles.emptyHistoryCard}>
-          <Ionicons name="calendar-outline" size={36} color="#9CA3AF" />
+          <Ionicons name="calendar-outline" size={36} color={PATIENTS_COLORS.textoSecundario} />
           <Text style={styles.emptyHistoryText}>
             Aún no hay sesiones agendadas para este paciente.
           </Text>
@@ -665,7 +681,7 @@ const ScheduleSessionModal: React.FC<ScheduleSessionModalProps> = ({
                   <Ionicons
                     name="information-circle"
                     size={17}
-                    color="#92400E"
+                    color={PATIENTS_COLORS.textWarningStrong}
                     style={{ marginRight: 6 }}
                   />
                   <Text style={styles.substitutionScheduleNoticeText}>
@@ -685,11 +701,11 @@ const ScheduleSessionModal: React.FC<ScheduleSessionModalProps> = ({
                 onPress={() => setShowDatePicker(true)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="calendar" size={18} color="#0F613B" style={styles.pickerIcon} />
+                <Ionicons name="calendar" size={18} color={PATIENTS_COLORS.iconosPerfil} style={styles.pickerIcon} />
                 <Text style={[styles.pickerValueText, !fecha && styles.pickerPlaceholder]}>
                   {fecha ? formatToChileanDate(fecha) : 'Seleccionar fecha'}
                 </Text>
-                <Ionicons name="chevron-down" size={16} color="#6B7280" />
+                <Ionicons name="chevron-down" size={16} color={PATIENTS_COLORS.textoSecundario} />
               </TouchableOpacity>
 
               {/* Hora */}
@@ -702,13 +718,13 @@ const ScheduleSessionModal: React.FC<ScheduleSessionModalProps> = ({
                 <Ionicons
                   name="time"
                   size={18}
-                  color={fecha ? '#0F613B' : '#9CA3AF'}
+                  color={fecha ? PATIENTS_COLORS.iconosPerfil : PATIENTS_COLORS.textoSecundario}
                   style={styles.pickerIcon}
                 />
                 <Text style={[styles.pickerValueText, !hora && styles.pickerPlaceholder]}>
                   {hora || (fecha ? 'Seleccionar hora' : 'Primero elige la fecha')}
                 </Text>
-                <Ionicons name="chevron-down" size={16} color="#6B7280" />
+                <Ionicons name="chevron-down" size={16} color={PATIENTS_COLORS.textoSecundario} />
               </TouchableOpacity>
 
               {/* Duración */}
@@ -769,7 +785,7 @@ const ScheduleSessionModal: React.FC<ScheduleSessionModalProps> = ({
                   { minHeight: 64, textAlignVertical: 'top', paddingTop: 10 },
                 ]}
                 placeholder="Ej. Seguimiento de ansiedad, evaluación inicial, acuerdos previos..."
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={PATIENTS_COLORS.textoSecundario}
                 value={observaciones}
                 onChangeText={setObservaciones}
                 multiline
@@ -782,7 +798,7 @@ const ScheduleSessionModal: React.FC<ScheduleSessionModalProps> = ({
                 disabled={isSaving}
               >
                 {isSaving ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={PATIENTS_COLORS.textoBlanco} />
                 ) : (
                   <Text style={styles.saveButtonText}>Agendar</Text>
                 )}
@@ -1051,20 +1067,20 @@ const EditSessionModal: React.FC<EditSessionModalProps> = ({
           <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.modalHeaderRow}>
-                <Text style={styles.modalHeaderTitle}>Modificar Cita</Text>
+                <Text style={styles.modalHeaderTitle}>Modificar Cita paciente</Text>
                 <TouchableOpacity
                   onPress={handleClose}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="close" size={22} color="#6B7280" />
+                 
                 </TouchableOpacity>
               </View>
 
               <View style={styles.infoBanner}>
                 <Text style={styles.infoBannerText}>
-                  Paciente:{' '}
-                  <Text style={{ fontWeight: '700' }}>
-                    {patient.nombre} {patient.apellido_paterno}
+                  Nombre: {' '}
+                  <Text style={{ fontWeight: '500' }}>
+                    {patient.nombre} {patient.apellido_paterno} {patient.apellido_materno}
                   </Text>
                 </Text>
               </View>
@@ -1079,11 +1095,11 @@ const EditSessionModal: React.FC<EditSessionModalProps> = ({
                 <Ionicons
                   name="calendar-outline"
                   size={18}
-                  color="#0F613B"
+                  color={PATIENTS_COLORS.iconosPerfil}
                   style={styles.pickerIcon}
                 />
                 <Text style={styles.pickerValueText}>{formatToChileanDate(editFecha)}</Text>
-                <Ionicons name="chevron-down" size={16} color="#6B7280" />
+                <Ionicons name="chevron-down" size={16} color={PATIENTS_COLORS.iconosPerfil} />
               </TouchableOpacity>
 
               {/* Hora */}
@@ -1096,11 +1112,11 @@ const EditSessionModal: React.FC<EditSessionModalProps> = ({
                 <Ionicons
                   name="time-outline"
                   size={18}
-                  color="#0F613B"
+                  color={PATIENTS_COLORS.iconosPerfil}
                   style={styles.pickerIcon}
                 />
                 <Text style={styles.pickerValueText}>{editHora} hrs</Text>
-                <Ionicons name="chevron-down" size={16} color="#6B7280" />
+                <Ionicons name="chevron-down" size={16} color={PATIENTS_COLORS.iconosPerfil} />
               </TouchableOpacity>
 
               {/* Duración */}
@@ -1139,7 +1155,7 @@ const EditSessionModal: React.FC<EditSessionModalProps> = ({
                   <Ionicons
                     name="business-outline"
                     size={16}
-                    color={editModalidad === 'presencial' ? '#0F613B' : '#6B7280'}
+                    color={editModalidad === 'presencial' ? PATIENTS_COLORS.iconosPerfil : PATIENTS_COLORS.textoSecundario}
                   />
                   <Text
                     style={[
@@ -1159,7 +1175,7 @@ const EditSessionModal: React.FC<EditSessionModalProps> = ({
                   <Ionicons
                     name="videocam-outline"
                     size={16}
-                    color={editModalidad === 'online' ? '#0F613B' : '#6B7280'}
+                    color={editModalidad === 'online' ? PATIENTS_COLORS.iconosPerfil : PATIENTS_COLORS.textoSecundario}
                   />
                   <Text
                     style={[
@@ -1180,7 +1196,7 @@ const EditSessionModal: React.FC<EditSessionModalProps> = ({
                   { minHeight: 64, textAlignVertical: 'top', paddingTop: 10 },
                 ]}
                 placeholder="Observaciones de la sesión..."
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={PATIENTS_COLORS.textoSecundario}
                 value={editObservaciones}
                 onChangeText={setEditObservaciones}
                 multiline
@@ -1197,9 +1213,9 @@ const EditSessionModal: React.FC<EditSessionModalProps> = ({
                 disabled={isUpdating || isDeleting}
               >
                 {isUpdating ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={PATIENTS_COLORS.textoBlanco} />
                 ) : (
-                  <Text style={styles.saveButtonText}>Guardar modificaciones</Text>
+                  <Text style={styles.saveButtonText}>Guardar</Text>
                 )}
               </TouchableOpacity>
 
@@ -1214,7 +1230,7 @@ const EditSessionModal: React.FC<EditSessionModalProps> = ({
                 disabled={isUpdating || isDeleting}
               >
                 {isDeleting ? (
-                  <ActivityIndicator size="small" color="#DC2626" />
+                  <ActivityIndicator size="small" color={PATIENTS_COLORS.danger} />
                 ) : (
                   <View
                     style={{
@@ -1224,8 +1240,8 @@ const EditSessionModal: React.FC<EditSessionModalProps> = ({
                       gap: 6,
                     }}
                   >
-                    <Ionicons name="trash-outline" size={17} color="#DC2626" />
-                    <Text style={styles.deleteButtonText}>Cancelar y eliminar cita</Text>
+                    <Ionicons name="trash-outline" size={17} color={PATIENTS_COLORS.danger} />
+                    <Text style={styles.deleteButtonText}>Eliminar cita</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -1316,6 +1332,7 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
   const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
   const [editingSession, setEditingSession] = useState<AppointmentSession | null>(null);
   const [showHabitFilterModal, setShowHabitFilterModal] = useState(false);
+  const [showHopeHistoryModal, setShowHopeHistoryModal] = useState(false);
   const navigation = useNavigation<PsychologistNavigationProp>();
 
   const handleConfirmHabitReport = (filters: HabitReportFilters) => {
@@ -1346,15 +1363,8 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={onBack} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="arrow-back" size={22} color="#374151" />
-        </TouchableOpacity>
         <View style={{ marginLeft: 10 }}>
           <Text style={styles.tag}>FICHA DEL PACIENTE</Text>
-          <Text style={styles.patientName}>
-            {currentPatient.nombre} {currentPatient.apellido_paterno}{' '}
-            {currentPatient.apellido_materno}
-          </Text>
         </View>
       </View>
 
@@ -1370,21 +1380,44 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
           activeOpacity={0.85}
         >
           <View style={styles.habitsReportIconWrapper}>
-            <Ionicons name="analytics" size={22} color="#FFFFFF" />
+            <Ionicons name="analytics" size={22} color={PATIENTS_COLORS.iconosPerfil} />
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={styles.habitsReportTextContainer}>
             <Text style={styles.habitsReportTitle}>Registro de Hábitos</Text>
             <Text style={styles.habitsReportSubtitle}>
               Consultar informe visual con gráficas y promedios
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={22} color="#1A7A54" />
+          <Ionicons name="chevron-forward" size={22} color={PATIENTS_COLORS.iconosPerfil} />
         </TouchableOpacity>
 
+        {/* Botón de acceso al Historial de Acompañamiento H.o.p.e (IA) */}
+        <TouchableOpacity
+          style={styles.hopeReportButton}
+          onPress={() => setShowHopeHistoryModal(true)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.hopeReportIconWrapper}>
+            <Image
+              source={require('../../../assets/h.o.p.e.png')}
+              style={styles.hopeReportAvatar}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.habitsReportTextContainer}>
+            <Text style={styles.habitsReportTitle}>Historial H.o.p.e (IA)</Text>
+            <Text style={styles.habitsReportSubtitle}>
+              Revisa las conversaciones con día, hora y cierre de sesión
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={22} color={PATIENTS_COLORS.iconosPerfil} />
+        </TouchableOpacity>
+
+        {/* Botón para Agendar nueva sesión */}
         <TouchableOpacity
           style={[
             styles.scheduleButton,
-            !isSubscriptionActive && { backgroundColor: '#9CA3AF' },
+            !isSubscriptionActive && { opacity: 0.6 },
           ]}
           onPress={openScheduleModal}
           activeOpacity={isSubscriptionActive ? 0.85 : 0.6}
@@ -1393,10 +1426,10 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
             <Ionicons
               name={isSubscriptionActive ? 'calendar' : 'lock-closed'}
               size={22}
-              color="#FFFFFF"
+              color={PATIENTS_COLORS.iconosPerfil}
             />
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={styles.scheduleTextContainer}>
             <Text style={styles.scheduleTitle}>
               {isSubscriptionActive ? 'Agendar nueva sesión' : 'Agendar sesión (Bloqueado)'}
             </Text>
@@ -1409,7 +1442,7 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
           <Ionicons
             name="chevron-forward"
             size={22}
-            color={isSubscriptionActive ? '#A8DED3' : '#FCA5A5'}
+            color={PATIENTS_COLORS.iconosPerfil}
           />
         </TouchableOpacity>
 
@@ -1453,139 +1486,268 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
         onClose={() => setShowHabitFilterModal(false)}
         onConfirm={handleConfirmHabitReport}
       />
+
+      <HopeSessionsModal
+        visible={showHopeHistoryModal}
+        patientId={currentPatient.id}
+        patientName={`${currentPatient.nombre} ${currentPatient.apellido_paterno}`}
+        onClose={() => setShowHopeHistoryModal(false)}
+      />
     </SafeAreaView>
   );
 };
 
+// ESTILOS DETALLE PACIENTE
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAF9' },
+  container: { flex: 1, backgroundColor: PATIENTS_COLORS.fondoBase },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: PATIENTS_COLORS.fondoBase,
+    marginTop: 25,
+  },
+
+  // Reemplazar o agregar estos estilos en el StyleSheet:
+  infoLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: PATIENTS_COLORS.textoPrincipal,
+    marginBottom: 6,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: PATIENTS_COLORS.textoSecundario,
+  },
+
+  tag: {
+    fontSize: 13, 
+    fontWeight: '600', 
+    color: PATIENTS_COLORS.textoPrincipal,
+    letterSpacing: 0.6, 
+  },
+
+  scrollContent: { 
+    paddingHorizontal: 20,
+    paddingTop: 20, 
+    paddingBottom: 40,
+  },
+
+  infoCard: {
+    backgroundColor: PATIENTS_COLORS.fondoBase,
+    borderRadius: 15,
+    borderWidth: 0,
+    borderColor: PATIENTS_COLORS.bordeIconos,
+    padding: 16,
+    paddingHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 18,
+    
+  },
+
+  infoText: {
+    fontSize: 14, 
+    color: PATIENTS_COLORS.textoSecundario, 
+    marginBottom: 6 
+  },
+
+  habitsReportButton: {
+    backgroundColor: PATIENTS_COLORS.fondoClaro,
+    borderRadius: 15,
+    padding: 16,
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EDF2F7',
-  },
-  tag: { fontSize: 11, fontWeight: '800', color: '#268D77', letterSpacing: 0.8 },
-  patientName: { fontSize: 17, fontWeight: '700', color: '#1F2937', marginTop: 2 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
-  infoCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E7F0EA',
-    borderLeftWidth: 8,
-    borderLeftColor: '#3FB889',
-    padding: 16,
-    marginBottom: 18,
-  },
-  infoText: { fontSize: 13, color: '#60756D', marginBottom: 6 },
-  habitsReportButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#C6E7D6',
-    shadowColor: '#1A7A54',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: PATIENTS_COLORS.bordeIconos,
     marginBottom: 16,
   },
+
+  hopeReportButton: {
+    backgroundColor: PATIENTS_COLORS.fondoClaro,
+    borderRadius: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#C8E6C9',
+    marginBottom: 16,
+  },
+
+  hopeReportIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+    borderWidth: 1,
+    borderColor: '#C8E6C9',
+  },
+
+  hopeReportAvatar: {
+    width: 28,
+    height: 28,
+  },
+
   habitsReportIconWrapper: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: '#1A7A54',
+    borderRadius: 15,
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
   },
-  habitsReportTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
+  
+  habitsReportTextContainer: {
+    flex: 1,
   },
+ 
+  habitsReportTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: PATIENTS_COLORS.textoPrincipal,
+  },
+
   habitsReportSubtitle: {
     fontSize: 12,
-    color: '#60756D',
+    color: PATIENTS_COLORS.textoSecundario,
     marginTop: 2,
   },
+
   scheduleButton: {
-    backgroundColor: '#0F613B',
-    borderRadius: 18,
-    padding: 18,
+    backgroundColor: PATIENTS_COLORS.fondoClaro,
+    borderRadius: 15,
+    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#0F613B',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: PATIENTS_COLORS.bordeIconos,
     marginBottom: 24,
+    
   },
+
   scheduleIconWrapper: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 14,
   },
-  scheduleTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
-  scheduleSubtitle: { color: '#D1E7DD', fontSize: 11.5, marginTop: 2 },
 
-  historyTitle: { fontSize: 16, fontWeight: '700', color: '#1F2937', marginBottom: 10 },
+  scheduleTextContainer: {
+    flex: 1,
+  },
+
+  scheduleTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: PATIENTS_COLORS.textoPrincipal,
+  },
+
+  scheduleSubtitle: {
+    fontSize: 12,
+    color: PATIENTS_COLORS.textoSecundario,
+    marginTop: 2,
+  },
+
+  historyTitle: { 
+    fontSize: 16, 
+    fontWeight: '600', color: PATIENTS_COLORS.textoPrincipal, 
+    marginBottom: 15,
+    marginTop: 10,
+  },
+
   emptyHistoryCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     borderRadius: 16,
     paddingVertical: 28,
     paddingHorizontal: 20,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: PATIENTS_COLORS.bordeIconos,
     borderStyle: 'dashed',
+    
   },
-  emptyHistoryText: { fontSize: 13, color: '#6B7280', textAlign: 'center', marginTop: 10 },
+  
+  emptyHistoryText: { 
+    fontSize: 13, 
+    color: PATIENTS_COLORS.textoSecundario, 
+    textAlign: 'center', 
+    marginTop: 10 
+  },
+  
   sessionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: PATIENTS_COLORS.bordeHistorial,
     padding: 14,
     marginBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  sessionDate: { fontSize: 12.5, fontWeight: '600', color: '#374151' },
-  sessionMotivo: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  
+  sessionCardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 6,
+  },
+
+  sessionDate: { 
+    flex: 1,
+    fontSize: 13, 
+    fontWeight: '600', 
+    color: PATIENTS_COLORS.textoHora,
+    lineHeight: 18,
+  },
+
+  sessionMotivo: { 
+    fontSize: 12, 
+    color: PATIENTS_COLORS.textoSecundario, 
+    marginTop: 2 
+  },
+
   statusBadge: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: PATIENTS_COLORS.fondoiconos,
     paddingVertical: 4,
     paddingHorizontal: 10,
-    borderRadius: 10,
+    borderRadius: 5,
+    borderColor: PATIENTS_COLORS.bordeIconos,
+    borderWidth: 1,
   },
-  statusBadgeText: { fontSize: 11, fontWeight: '700', color: '#B45309' },
-  statusBadgeCompleted: { backgroundColor: '#E8F5E9' },
-  statusBadgeTextCompleted: { color: '#0F613B' },
-  statusBadgeCancelled: { backgroundColor: '#FEE2E2' },
-  statusBadgeTextCancelled: { color: '#DC2626' },
+
+  statusBadgeText: { 
+    fontSize: 11, 
+    fontWeight: '600', 
+    color: PATIENTS_COLORS.textoProgramada,
+    
+  },
+
+  statusBadgeCompleted: { backgroundColor: PATIENTS_COLORS.fondoiconos },
+  statusBadgeTextCompleted: { color: PATIENTS_COLORS.estadoCompletada },
+  statusBadgeCancelled: { backgroundColor: PATIENTS_COLORS.fondoiconos },
+  statusBadgeTextCancelled: { color: PATIENTS_COLORS.danger },
   sessionCardCancelled: {
-    backgroundColor: '#FAFAFA',
-    borderColor: '#F3F4F6',
+    backgroundColor: PATIENTS_COLORS.fondoiconos,
+    borderColor: PATIENTS_COLORS.bordeIconos,
   },
   sessionDateCancelled: {
-    color: '#6B7280',
+    color: PATIENTS_COLORS.textoSecundario,
   },
   sessionMotivoCancelled: {
-    color: '#9CA3AF',
+    color: PATIENTS_COLORS.textoSecundario,
   },
 
   paginationRow: {
@@ -1594,8 +1756,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+  
   },
   pageButton: {
     flexDirection: 'row',
@@ -1604,83 +1765,103 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     gap: 4,
   },
+
   pageButtonDisabled: { opacity: 0.5 },
-  pageButtonText: { fontSize: 13.5, fontWeight: '700', color: '#0F613B' },
-  pageButtonTextDisabled: { color: '#CBD5E1' },
-  pageIndicator: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
+  pageButtonText: { fontSize: 13, fontWeight: '600', color: PATIENTS_COLORS.textoSecundario },
+  pageButtonTextDisabled: { color: PATIENTS_COLORS.textoSecundario },
+  pageIndicator: { fontSize: 13, fontWeight: '600', color: PATIENTS_COLORS.iconosPerfil },
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: PATIENTS_COLORS.modalBackdrop,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
+
   modalContent: {
     width: '100%',
     maxWidth: 360,
     maxHeight: '85%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    backgroundColor: PATIENTS_COLORS.fondoBase,
+    borderRadius: 15,
     padding: 20,
   },
+
   modalTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 14,
+    fontSize: 16,
+    fontWeight: '600',
+    color: PATIENTS_COLORS.textoPrincipal,
+    marginBottom: 30,
     textAlign: 'center',
   },
-  fieldLabel: { fontSize: 12.5, fontWeight: '700', color: '#4A5568', marginBottom: 6 },
+
+  fieldLabel: { fontSize: 12, fontWeight: '600', color: PATIENTS_COLORS.textoSecundario, marginBottom: 6 },
+ 
   pickerTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: PATIENTS_COLORS.bordeIconos,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 11,
     marginBottom: 14,
   },
+
   pickerTriggerDisabled: {
-    backgroundColor: '#F9FAFB',
-    borderColor: '#E5E7EB',
+    backgroundColor: PATIENTS_COLORS.fondoiconos,
+    borderColor: PATIENTS_COLORS.bordeIconos,
   },
+
   pickerIcon: { marginRight: 10 },
-  pickerValueText: { flex: 1, fontSize: 14, fontWeight: '500', color: '#1F2937' },
-  pickerPlaceholder: { color: '#9CA3AF', fontWeight: '400' },
+
+  pickerValueText: { flex: 1, fontSize: 12, fontWeight: '500', color: PATIENTS_COLORS.textoPrincipal },
+  
+  pickerPlaceholder: { color: PATIENTS_COLORS.textoSecundario, fontWeight: '400' },
+  
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  
   chip: {
     flexGrow: 1,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderColor: PATIENTS_COLORS.bordeIconos,
     borderRadius: 10,
-    paddingVertical: 9,
+    paddingVertical: 6,
     alignItems: 'center',
   },
-  chipActive: { borderColor: '#0F613B', backgroundColor: '#E8F5E9' },
-  chipText: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
-  chipTextActive: { color: '#0F613B', fontWeight: '700' },
+
+  chipActive: { borderColor: PATIENTS_COLORS.iconosPerfil, backgroundColor: PATIENTS_COLORS.fondoClaro},
+  
+  chipText: { fontSize: 12, fontWeight: '600', color: PATIENTS_COLORS.textoSecundario },
+  
+  chipTextActive: { color: PATIENTS_COLORS.iconosPerfil, fontWeight: '700' },
+  
   input: {
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderColor: PATIENTS_COLORS.bordeIconos,
     borderRadius: 12,
     paddingVertical: 11,
     paddingHorizontal: 14,
     fontSize: 14,
-    color: '#1F2937',
+    color: PATIENTS_COLORS.textoPrincipal,
     marginBottom: 16,
   },
+
   saveButton: {
-    backgroundColor: '#0F613B',
-    borderRadius: 14,
-    paddingVertical: 14,
+    backgroundColor: PATIENTS_COLORS.iconosPerfil,
+    borderRadius: 12,
+    paddingVertical: 8,
+    width: '30%',
     alignItems: 'center',
+    alignSelf: 'center',
   },
-  saveButtonText: { color: '#FFFFFF', fontSize: 15.5, fontWeight: '700' },
+
+  saveButtonText: { color: PATIENTS_COLORS.textoBlanco, fontSize: 14, fontWeight: '600' },
+  
   cancelText: {
-    color: '#6B7280',
-    fontSize: 13,
+    color: PATIENTS_COLORS.textoSecundario,
+    fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
     marginTop: 8,
@@ -1688,63 +1869,74 @@ const styles = StyleSheet.create({
 
   sessionCardRightCol: {
     alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: 8,
+    justifyContent: 'flex-start',
+    flexShrink: 0,
+    gap: 6,
   },
+
   manageButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EAF5EE',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#CBE5D6',
+    borderColor: PATIENTS_COLORS.bordeIconos,
   },
+
   manageButtonText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: '#0F613B',
+    fontSize: 11,
+    fontWeight: '600',
+    color: PATIENTS_COLORS.iconosPerfil,
   },
+
   modalHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginTop: 15,
+    marginBottom: 25,
   },
+
   modalHeaderTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '600',
+    color: PATIENTS_COLORS.textoPrincipal,
   },
   infoBanner: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 14,
+    backgroundColor: PATIENTS_COLORS.fondoBase,
+    borderRadius: 12,
+    padding: 0,
+    marginBottom: 30,
   },
   infoBannerText: {
-    fontSize: 12.5,
-    color: '#4B5563',
+    fontSize: 13,
+    color: PATIENTS_COLORS.textoSecundario,
   },
+
   deleteButton: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: PATIENTS_COLORS.fondoiconos,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    width: '50%',
+    alignSelf: 'center',
+    borderColor: PATIENTS_COLORS.bordeIconos,
     borderRadius: 14,
-    paddingVertical: 12,
+    paddingVertical: 8,
     alignItems: 'center',
     marginTop: 10,
   },
+
   deleteButtonText: {
-    color: '#DC2626',
-    fontSize: 14,
-    fontWeight: '700',
+    color: PATIENTS_COLORS.danger,
+    fontSize: 13,
+    fontWeight: '600',
   },
+
   suplenteBanner: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: PATIENTS_COLORS.infoSurface,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: PATIENTS_COLORS.infoBorder,
     borderRadius: 14,
     padding: 14,
     marginBottom: 14,
@@ -1758,17 +1950,17 @@ const styles = StyleSheet.create({
   suplenteBannerTitle: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#1E40AF',
+    color: PATIENTS_COLORS.textInfoStrong,
   },
   suplenteBannerText: {
     fontSize: 12.5,
-    color: '#1E3A8A',
+    color: PATIENTS_COLORS.textInfoDark,
     lineHeight: 18,
   },
   titularSuplenciaBanner: {
-    backgroundColor: '#FFFBEB',
+    backgroundColor: PATIENTS_COLORS.warningSurfaceSoft,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: PATIENTS_COLORS.borderWarning,
     borderRadius: 14,
     padding: 14,
     marginBottom: 14,
@@ -1776,30 +1968,13 @@ const styles = StyleSheet.create({
   titularBannerTitle: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#92400E',
+    color: PATIENTS_COLORS.textWarningStrong,
   },
   titularBannerText: {
     fontSize: 12.5,
-    color: '#78350F',
+    color: PATIENTS_COLORS.textWarningDark,
     lineHeight: 18,
     marginBottom: 10,
-  },
-  endSuplenciaBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FEF3C7',
-    borderWidth: 1,
-    borderColor: '#FCD34D',
-    borderRadius: 10,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    alignSelf: 'flex-start',
-  },
-  endSuplenciaBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#B45309',
   },
   doctorBadgeRow: {
     flexDirection: 'row',
@@ -1808,31 +1983,32 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   doctorBadgeText: {
-    fontSize: 11.5,
-    color: '#6B7280',
+    flex: 1,
+    fontSize: 11,
+    color: PATIENTS_COLORS.textoSecundario,
     fontWeight: '600',
   },
   readOnlyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: PATIENTS_COLORS.fondoiconos,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: PATIENTS_COLORS.bordeIconos,
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 6,
   },
   readOnlyBadgeText: {
     fontSize: 11,
-    color: '#6B7280',
+    color: PATIENTS_COLORS.textoSecundario,
     fontWeight: '600',
   },
   substitutionScheduleNotice: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFBEB',
+    backgroundColor: PATIENTS_COLORS.warningSurfaceSoft,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: PATIENTS_COLORS.borderWarning,
     borderRadius: 10,
     padding: 10,
     marginBottom: 14,
@@ -1840,7 +2016,7 @@ const styles = StyleSheet.create({
   substitutionScheduleNoticeText: {
     flex: 1,
     fontSize: 12,
-    color: '#92400E',
+    color: PATIENTS_COLORS.textWarningStrong,
     lineHeight: 16,
   },
 });

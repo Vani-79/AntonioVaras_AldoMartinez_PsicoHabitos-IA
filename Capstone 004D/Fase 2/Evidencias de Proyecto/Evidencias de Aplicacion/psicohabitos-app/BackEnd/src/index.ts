@@ -8,6 +8,8 @@ import { patientRouter } from './routes/patient.routes';
 import { habitRouter } from './routes/habit.routes';
 import { adminRouter } from './routes/admin.routes';
 import { appointmentRouter } from './routes/appointment.routes';
+import { resourceRouter } from './routes/resource.routes';
+import { hopeRouter } from './routes/hope.routes';
 import { generalLimiter } from './middlewares/rateLimiter';
 
 dotenv.config();
@@ -89,6 +91,9 @@ app.use('/api/auth', authRouter);
 app.use('/api/patients', patientRouter);
 app.use('/api/appointments', appointmentRouter);
 app.use('/api/habits', habitRouter);
+app.use('/api/resources', resourceRouter);
+app.use('/api/recursos', resourceRouter);
+app.use('/api/hope', hopeRouter);
 app.use('/', adminRouter);
 
 // Manejador global de errores (captura bloqueos de CORS y errores internos)

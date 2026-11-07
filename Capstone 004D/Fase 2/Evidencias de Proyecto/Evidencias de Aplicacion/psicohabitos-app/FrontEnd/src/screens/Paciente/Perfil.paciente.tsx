@@ -1,13 +1,86 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { PatientBottomNav, PatientTab } from '../../components/PatientBottomNav';
+import { PatientBottomNav, PatientTab } from '../../components/Iconosbarrapaciente';
 import { ProfileRoleHeader } from '../../components/ProfileRoleHeader';
+import { useAuth } from '../../context/AuthContext';
 import { patientService } from '../../services/patientService';
 import { PatientProfileData } from '../../types/patient';
-import { useAuth } from '../../context/AuthContext';
 import { formatToChileanDate } from '../../utils/date';
+
+const COLORS = {
+  // Superficies
+  screenBg: '#EAF5EE',
+  cardBg: '#FFFFFF',
+  divider: '#E9EEF0',
+  border: '#0b6d370e',
+
+  // Perfil
+  roleTagBg: '#414a4587', //tarjeta paciente registrado o no 
+  avatarBg: '#dbede2a1', //icono de perfil
+  avatarIcon: '#9ebcbbd8', //icono
+  textDark: '#25362d9b',
+  registerText: '#ffffff',
+  textMuted: '#6B7280',
+  textWhite: '#FFFFFF',
+  infoIconBg: '#e2e7e470',
+  infoIconColor: '#1f2c25',
+
+  // Suplencia
+  suplenteBg: '#EFF6FF',
+  suplenteBorder: '#BFDBFE',
+  suplenteTitle: '#1D4ED8',
+  suplenteText: '#1E3A8A',
+  revokeBg: '#FEE2E2',
+  revokeBorder: '#FECACA',
+  revokeText: '#DC2626',
+
+  // Acción de cerrar sesión
+  logoutBg: '#c61f1fd7',
+};
+
+const formatAge = (edad?: number | string, birthDateStr?: string): string => {
+  if (birthDateStr) {
+    const birthDate = new Date(birthDateStr);
+    if (!Number.isNaN(birthDate.getTime())) {
+      const today = new Date();
+      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+      if (calculatedAge >= 0) return `${calculatedAge} años`;
+    }
+  }
+  return edad ? `${edad} años` : 'No registrada';
+};
+
+interface InfoItemProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value?: string;
+}
+
+const InfoItem: React.FC<InfoItemProps> = ({ icon, label, value }) => (
+  <View style={styles.infoRow}>
+    <View style={styles.infoIconWrapper}>
+      <Ionicons name={icon} size={18} color={COLORS.infoIconColor} />
+    </View>
+    <View style={styles.infoTextWrapper}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value || 'No registrado'}</Text>
+    </View>
+  </View>
+);
 
 interface PatientProfileScreenProps {
   onNavigateTab: (tab: PatientTab) => void;
@@ -16,35 +89,6 @@ interface PatientProfileScreenProps {
   onLogout?: () => void;
 }
 
-const formatBirthDate = (dateStr?: string): string => {
-  if (!dateStr) return 'No registrada';
-  return formatToChileanDate(dateStr) || 'No registrada';
-};
-
-const formatAge = (edad?: number | string, birthDateStr?: string): string => {
-  if (birthDateStr) {
-    const raw = birthDateStr.split('T')[0];
-    const parts = raw.split('-');
-    if (parts.length === 3) {
-      const year = Number.parseInt(parts[0], 10);
-      const month = Number.parseInt(parts[1], 10) - 1;
-      const day = Number.parseInt(parts[2], 10);
-      const birthDate = new Date(year, month, day);
-      const today = new Date();
-      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        calculatedAge--;
-      }
-      if (!Number.isNaN(calculatedAge) && calculatedAge >= 0) {
-        return `${calculatedAge} años`;
-      }
-    }
-  }
-  if (edad === undefined || edad === null || edad === '') return 'No registrada';
-  return `${edad} años`;
-};
-
 export const PatientProfileScreen: React.FC<PatientProfileScreenProps> = ({
   onNavigateTab,
   userName = 'Paciente',
@@ -52,16 +96,9 @@ export const PatientProfileScreen: React.FC<PatientProfileScreenProps> = ({
   onLogout,
 }) => {
   const insets = useSafeAreaInsets();
-  const { user, switchRole } = useAuth();
   const [profile, setProfile] = useState<PatientProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRevoking, setIsRevoking] = useState(false);
-
-  const canSwitchToPsychologist =
-    Boolean(user?.hasMultipleRoles) ||
-    Boolean(profile?.hasMultipleRoles) ||
-    Boolean(user?.availableRoles?.includes('psicologo')) ||
-    Boolean(profile?.availableRoles?.includes('psicologo'));
 
   const loadProfile = async () => {
     setLoading(true);
@@ -69,7 +106,7 @@ export const PatientProfileScreen: React.FC<PatientProfileScreenProps> = ({
       const data = await patientService.getPatientProfile(userEmail, userName);
       setProfile(data);
     } catch (err) {
-      console.warn('Error al cargar perfil del paciente desde MySQL:', err);
+      console.warn('Error al cargar perfil:', err);
     } finally {
       setLoading(false);
     }
@@ -84,7 +121,7 @@ export const PatientProfileScreen: React.FC<PatientProfileScreenProps> = ({
     const suplenteName = profile.suplente?.nombre || 'el psicólogo suplente';
     Alert.alert(
       '¿Revocar suplencia?',
-      `Se revocará inmediatamente el acceso temporal de ${suplenteName} a tu ficha e historial clínico.\n\nCualquier cita futura pendiente con el suplente será cancelada automáticamente para que puedas reagendar con tu psicólogo titular (${profile.especialista || 'titular'}).`,
+      `Se revocará inmediatamente el acceso temporal de ${suplenteName} a tu ficha e historial clínico.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -95,10 +132,7 @@ export const PatientProfileScreen: React.FC<PatientProfileScreenProps> = ({
             const res = await patientService.endSubstitution(profile.id!);
             setIsRevoking(false);
             if (res.success) {
-              Alert.alert(
-                'Suplencia revocada',
-                res.message || 'Se ha revocado el acceso temporal al psicólogo suplente y se cancelaron las citas pendientes.'
-              );
+              Alert.alert('Suplencia revocada', res.message || 'Acceso revocado con éxito.');
               void loadProfile();
             } else {
               Alert.alert('Error', res.error || 'No se pudo revocar la suplencia.');
@@ -109,122 +143,75 @@ export const PatientProfileScreen: React.FC<PatientProfileScreenProps> = ({
     );
   };
 
-  const fullName = profile
-    ? [profile.nombre, profile.apellido_paterno, profile.apellido_materno]
-        .filter(Boolean)
-        .join(' ')
-        .trim() || userName
-    : userName;
-
   const handleLogoutPress = () => {
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro de que deseas cerrar sesión?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Cerrar Sesión',
-          style: 'destructive',
-          onPress: () => {
-            onLogout?.();
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+    Alert.alert('Cerrar Sesión', '¿Estás seguro de que deseas cerrar sesión?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Cerrar Sesión', style: 'destructive', onPress: () => onLogout?.() },
+    ]);
   };
 
-  const renderProfileContent = () => {
+  const { user, switchRole } = useAuth();
+  const canSwitchToPsychologist =
+    Boolean(user?.hasMultipleRoles) ||
+    Boolean(profile?.hasMultipleRoles) ||
+    Boolean(user?.availableRoles?.includes('psicologo')) ||
+    Boolean(profile?.availableRoles?.includes('psicologo'));
+
+  const fullName = profile
+    ? [profile.nombre, profile.apellido_paterno, profile.apellido_materno].filter(Boolean).join(' ') || userName
+    : userName;
+
+  const renderCardContent = () => {
     if (loading) {
-      return (
-        <View style={styles.loadingCard}>
-          <ActivityIndicator size="large" color="#0F613B" />
-          <Text style={styles.loadingText}>Cargando datos desde la base de datos...</Text>
-        </View>
-      );
+      return <ActivityIndicator size="large" color={COLORS.roleTagBg} />;
     }
 
     if (profile) {
       return (
-        <View style={styles.profileCard}>
-          <View style={styles.avatarCircle}>
-            <Ionicons name="person" size={42} color="#0F613B" />
-          </View>
-          <Text style={styles.profileName}>{fullName}</Text>
-          <View style={styles.roleTag}>
-            <Text style={styles.roleTagText}>PACIENTE REGISTRADO</Text>
+        <>
+          {/* Encabezado Perfil */}
+          <View style={styles.headerProfileRow}>
+            <View style={styles.avatarCircle}>
+              <Ionicons name="person" size={26} color={COLORS.avatarIcon} />
+            </View>
+            <View style={styles.headerTextWrapper}>
+              <Text style={styles.profileName}>{fullName}</Text>
+              <View style={styles.roleTag}>
+                <Text style={styles.roleTagText}>PACIENTE REGISTRADO</Text>
+              </View>
+            </View>
           </View>
 
+          {/* Lista de Información */}
           <View style={styles.infoSection}>
-            {/* Campo: Nombre */}
-            <View style={styles.infoRow}>
-              <View style={styles.infoIconWrapper}>
-                <Ionicons name="person-outline" size={18} color="#0F613B" />
-              </View>
-              <View style={styles.infoTextWrapper}>
-                <Text style={styles.infoLabel}>Nombre</Text>
-                <Text style={styles.infoValue}>{fullName}</Text>
-              </View>
-            </View>
+            <InfoItem icon="person-outline" label="Nombre" value={fullName} />
+            <InfoItem
+              icon="hourglass-outline"
+              label="Edad"
+              value={formatAge(profile.edad, profile.fecha_nacimiento)}
+            />
+            <InfoItem
+              icon="calendar-outline"
+              label="Fecha de Nacimiento"
+              value={formatToChileanDate(profile.fecha_nacimiento)}
+            />
+            <InfoItem icon="mail-outline" label="Correo" value={profile.email || userEmail} />
+            <InfoItem
+              icon="medkit-outline"
+              label="Especialista Titular"
+              value={profile.especialista || 'Sin especialista asignado'}
+            />
 
-            {/* Campo: Edad */}
-            <View style={styles.infoRow}>
-              <View style={styles.infoIconWrapper}>
-                <Ionicons name="hourglass-outline" size={18} color="#0F613B" />
-              </View>
-              <View style={styles.infoTextWrapper}>
-                <Text style={styles.infoLabel}>Edad</Text>
-                <Text style={styles.infoValue}>{formatAge(profile.edad, profile.fecha_nacimiento)}</Text>
-              </View>
-            </View>
-
-            {/* Campo: Fecha de Nacimiento */}
-            <View style={styles.infoRow}>
-              <View style={styles.infoIconWrapper}>
-                <Ionicons name="calendar-outline" size={18} color="#0F613B" />
-              </View>
-              <View style={styles.infoTextWrapper}>
-                <Text style={styles.infoLabel}>Fecha de Nacimiento</Text>
-                <Text style={styles.infoValue}>{formatBirthDate(profile.fecha_nacimiento)}</Text>
-              </View>
-            </View>
-
-            {/* Campo: Correo */}
-            <View style={styles.infoRow}>
-              <View style={styles.infoIconWrapper}>
-                <Ionicons name="mail-outline" size={18} color="#0F613B" />
-              </View>
-              <View style={styles.infoTextWrapper}>
-                <Text style={styles.infoLabel}>Correo</Text>
-                <Text style={styles.infoValue}>{profile.email || userEmail || 'No registrado'}</Text>
-              </View>
-            </View>
-
-            {/* Campo: Especialista */}
-            <View style={styles.infoRow}>
-              <View style={styles.infoIconWrapper}>
-                <Ionicons name="medkit-outline" size={18} color="#0F613B" />
-              </View>
-              <View style={styles.infoTextWrapper}>
-                <Text style={styles.infoLabel}>Especialista Titular</Text>
-                <Text style={styles.infoValue}>{profile.especialista || 'Sin especialista asignado'}</Text>
-              </View>
-            </View>
-
-            {/* Suplencia Activa (si aplica) */}
+            {/* Caja de Suplencia */}
             {profile.suplente && (
               <View style={styles.suplenteBox}>
                 <View style={styles.suplenteBoxHeader}>
-                  <Ionicons name="shield-checkmark" size={18} color="#1D4ED8" />
+                  <Ionicons name="shield-checkmark" size={18} color={COLORS.suplenteTitle} />
                   <Text style={styles.suplenteBoxTitle}>Atención en Suplencia Activa</Text>
                 </View>
                 <Text style={styles.suplenteBoxDesc}>
-                  Has autorizado temporalmente a{' '}
-                  <Text style={{ fontWeight: '700' }}>{profile.suplente.nombre}</Text> para atenderte hasta el{' '}
-                  <Text style={{ fontWeight: '700' }}>
+                  Has autorizado temporalmente a <Text style={styles.boldText}>{profile.suplente.nombre}</Text> hasta el{' '}
+                  <Text style={styles.boldText}>
                     {profile.suplente.fecha_fin_suplencia ? formatToChileanDate(profile.suplente.fecha_fin_suplencia) : 'fecha límite'}
                   </Text>.
                 </Text>
@@ -235,10 +222,15 @@ export const PatientProfileScreen: React.FC<PatientProfileScreenProps> = ({
                   activeOpacity={0.8}
                 >
                   {isRevoking ? (
-                    <ActivityIndicator size="small" color="#DC2626" />
+                    <ActivityIndicator size="small" color={COLORS.revokeText} />
                   ) : (
                     <>
-                      <Ionicons name="close-circle-outline" size={16} color="#DC2626" style={{ marginRight: 6 }} />
+                      <Ionicons
+                        name="close-circle-outline"
+                        size={16}
+                        color={COLORS.revokeText}
+                        style={{ marginRight: 6 }}
+                      />
                       <Text style={styles.revokeSuplenteBtnText}>Revocar acceso de suplencia</Text>
                     </>
                   )}
@@ -246,40 +238,67 @@ export const PatientProfileScreen: React.FC<PatientProfileScreenProps> = ({
               </View>
             )}
           </View>
-        </View>
+
+          {/* Acceso directo a cambio de perfil si el usuario tiene rol dual */}
+          {canSwitchToPsychologist && (
+            <TouchableOpacity
+              style={styles.switchRoleCard}
+              activeOpacity={0.8}
+              onPress={() => {
+                Alert.alert(
+                  'Cambiar de Perfil',
+                  '¿Deseas cambiar al perfil de Psicólogo?',
+                  [
+                    { text: 'Cancelar', style: 'cancel' },
+                    {
+                      text: 'Cambiar',
+                      onPress: async () => {
+                        const res = await switchRole('psicologo');
+                        if (!res.success) {
+                          Alert.alert('Error al cambiar de perfil', res.error || 'No se pudo cambiar al perfil de psicólogo.');
+                        }
+                      },
+                    },
+                  ]
+                );
+              }}
+            >
+              <View style={styles.switchRoleIconWrapper}>
+                <Ionicons name="medical" size={18} color={COLORS.roleTagBg} />
+              </View>
+              <View style={styles.switchRoleTextWrapper}>
+                <Text style={styles.switchRoleTitle}>Portal Psicólogo</Text>
+                <Text style={styles.switchRoleSubtitle}>Cambiar a vista de especialista</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
+            </TouchableOpacity>
+          )}
+
+          {/* Botón Cerrar Sesión */}
+          <TouchableOpacity
+            style={styles.logoutButton}
+            activeOpacity={0.8}
+            onPress={handleLogoutPress}
+          >
+            <Ionicons
+              name="log-out-outline"
+              size={20}
+              color={COLORS.textWhite}
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
+          </TouchableOpacity>
+        </>
       );
     }
 
-    return (
-      <View style={styles.profileCard}>
-        <View style={styles.avatarCircle}>
-          <Ionicons name="person-outline" size={42} color="#0F613B" />
-        </View>
-        <Text style={styles.profileName}>{userName}</Text>
-        <View style={styles.roleTag}>
-          <Text style={styles.roleTagText}>INFORMACIÓN NO ENCONTRADA</Text>
-        </View>
-        <Text style={styles.emptyNote}>
-          No se encontraron registros en MySQL para este usuario.
-        </Text>
-      </View>
-    );
+    return <Text style={styles.emptyNote}>No se encontraron registros en la base de datos.</Text>;
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Encabezado con selector desplegable desde 'Mi Perfil' */}
-      <ProfileRoleHeader
-        title="Mi Perfil"
-        currentRole="paciente"
-        canSwitch={canSwitchToPsychologist}
-        onSwitchRole={async (targetRole) => {
-          const success = await switchRole(targetRole);
-          if (!success) {
-            Alert.alert('Error', 'No se pudo cambiar al perfil de psicólogo.');
-          }
-        }}
-      />
+      {/* Encabezado limpio 'Mi Perfil' */}
+      <ProfileRoleHeader title="Mi Perfil" />
 
       <ScrollView
         contentContainerStyle={[
@@ -287,175 +306,102 @@ export const PatientProfileScreen: React.FC<PatientProfileScreenProps> = ({
           { paddingBottom: Math.max(insets.bottom + 80, 100) },
         ]}
       >
-        {renderProfileContent()}
-
-        {/* Botón Cerrar Sesión */}
-        <TouchableOpacity
-          style={styles.logoutButton}
-          activeOpacity={0.8}
-          onPress={handleLogoutPress}
-        >
-          <Ionicons name="log-out-outline" size={20} color="#FFFFFF" style={styles.logoutIcon} />
-          <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-        </TouchableOpacity>
+        <View style={styles.cardBase}>
+          {renderCardContent()}
+        </View>
       </ScrollView>
 
-      {/* Barra de navegación inferior */}
       <PatientBottomNav activeTab="profile" onNavigate={onNavigateTab} />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#EAF5EE' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5EEE8',
-    backgroundColor: '#F8FBF9',
-  },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#1F2937' },
+  container: { flex: 1, backgroundColor: COLORS.screenBg },
   scrollContent: {
-    padding: 20,
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 60,
     alignItems: 'center',
   },
-  profileCard: {
+
+  cardBase: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    minHeight: 500,
+    backgroundColor: COLORS.cardBg,
+    borderColor: COLORS.border,
+    borderWidth: 1,
     borderRadius: 22,
     padding: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    elevation: 1,
   },
-  loadingCard: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
+
+  // Cabecera del perfil
   emptyNote: {
     fontSize: 14,
-    color: '#6B7280',
+    color: COLORS.textMuted,
     textAlign: 'center',
-    lineHeight: 20,
-    marginTop: 8,
+    marginTop: 20,
+  },
+  headerProfileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 16,
   },
   avatarCircle: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
-    backgroundColor: '#E4EDE7',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.avatarBg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 14,
-    borderWidth: 2,
-    borderColor: '#A5C1B3',
   },
+  headerTextWrapper: { flex: 1, marginLeft: 16 },
   profileName: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#1F2937',
-    marginBottom: 6,
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.textDark,
+    marginBottom: 4,
   },
   roleTag: {
-    backgroundColor: '#E4EDE7',
+    backgroundColor: COLORS.roleTagBg,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
-    marginBottom: 24,
+    alignSelf: 'flex-start',
   },
-  roleTagText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#0F613B',
-    letterSpacing: 0.5,
-  },
+  roleTagText: { fontSize: 10, fontWeight: '500', color: COLORS.registerText },
+
+  // Datos y detalles de suplencia
   infoSection: {
     width: '100%',
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    paddingTop: 16,
+    borderTopColor: COLORS.divider,
+    paddingTop: 12,
   },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
+  infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15 },
   infoIconWrapper: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: COLORS.infoIconBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
   },
-  infoTextWrapper: {
-    flex: 1,
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  infoValue: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginTop: 2,
-  },
-  logoutButton: {
-    width: '100%',
-    backgroundColor: '#DC2626',
-    borderRadius: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    shadowColor: '#DC2626',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  logoutIcon: {
-    marginRight: 8,
-  },
-  logoutButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  infoTextWrapper: { flex: 1 },
+  infoLabel: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+  infoValue: { fontSize: 15, fontWeight: '600', color: COLORS.textMuted, marginTop: 2 },
+  boldText: { fontWeight: '700' },
   suplenteBox: {
     marginTop: 14,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: COLORS.suplenteBg,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: COLORS.suplenteBorder,
     borderRadius: 14,
     padding: 14,
-    width: '100%',
   },
   suplenteBoxHeader: {
     flexDirection: 'row',
@@ -466,11 +412,11 @@ const styles = StyleSheet.create({
   suplenteBoxTitle: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#1D4ED8',
+    color: COLORS.suplenteTitle,
   },
   suplenteBoxDesc: {
     fontSize: 12.5,
-    color: '#1E3A8A',
+    color: COLORS.suplenteText,
     lineHeight: 18,
     marginBottom: 10,
   },
@@ -478,16 +424,65 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FEE2E2',
+    backgroundColor: COLORS.revokeBg,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: COLORS.revokeBorder,
     borderRadius: 10,
     paddingVertical: 8,
-    paddingHorizontal: 12,
   },
   revokeSuplenteBtnText: {
-    color: '#DC2626',
+    color: COLORS.revokeText,
     fontSize: 12.5,
     fontWeight: '700',
+  },
+
+  // Acciones de cuenta
+  switchRoleCard: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.infoIconBg,
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  switchRoleIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: COLORS.cardBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  switchRoleTextWrapper: {
+    flex: 1,
+  },
+  switchRoleTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textDark,
+  },
+  switchRoleSubtitle: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+  logoutButton: {
+    width: '50%',
+    backgroundColor: COLORS.logoutBg,
+    borderRadius: 9,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
+  },
+  logoutButtonText: {
+    color: COLORS.textWhite,
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

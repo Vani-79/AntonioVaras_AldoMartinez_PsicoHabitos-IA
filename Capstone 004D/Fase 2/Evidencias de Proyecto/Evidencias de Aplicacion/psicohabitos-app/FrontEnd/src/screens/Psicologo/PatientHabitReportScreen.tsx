@@ -22,21 +22,29 @@ import { appointmentService } from '../../services/appointmentService';
 import { HabitFilterModal } from '../../components/HabitFilterModal';
 import { formatToChileanDate } from '../../utils/date';
 import { getRatingLabel } from '../../constants/habits';
+import { PSYCHOLOGIST_COLORS } from './psychologistColors';
 
 type Props = NativeStackScreenProps<PsychologistStackParamList, 'PatientHabitReport'>;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+const PATIENTS_COLORS = PSYCHOLOGIST_COLORS.pacientes;
+const PROFILE_COLORS = PSYCHOLOGIST_COLORS.perfil;
+
 const HABIT_CONFIG: Record<
   HabitKey,
   { label: string; color: string; areaColor: string; icon: keyof typeof Ionicons.glyphMap }
-> = {
-  comida: { label: 'Comida', color: '#D97706', areaColor: '#FEF3C7', icon: 'restaurant-outline' },
-  ejercicio: { label: 'Ejercicio', color: '#16A34A', areaColor: '#DCFCE7', icon: 'barbell-outline' },
-  hidratacion: { label: 'Hidratación', color: '#0284C7', areaColor: '#E0F2FE', icon: 'water-outline' },
-  sueno: { label: 'Sueño', color: '#7C3AED', areaColor: '#EDE9FE', icon: 'moon-outline' },
-  ansiedad: { label: 'Ansiedad', color: '#E11D48', areaColor: '#FFE4E6', icon: 'pulse-outline' },
-  estres: { label: 'Estrés', color: '#2563EB', areaColor: '#DBEAFE', icon: 'flash-outline' },
+> = { 
+  
+  
+  //INFORME DE HABITOS COLORES
+
+  comida: { label: 'Comida', color: PATIENTS_COLORS.comida, areaColor: PATIENTS_COLORS.fondoComida, icon: 'restaurant-outline' },
+  ejercicio: { label: 'Ejercicio', color: PATIENTS_COLORS.ejercicio, areaColor: PATIENTS_COLORS.fondoEjercicio, icon: 'barbell-outline' },
+  hidratacion: { label: 'Hidratación', color: PATIENTS_COLORS.hidratacion, areaColor: PATIENTS_COLORS.fondoHidratacion, icon: 'water-outline' },
+  sueno: { label: 'Sueño', color: PATIENTS_COLORS.sueño, areaColor: PATIENTS_COLORS.fondoSueño, icon: 'moon-outline' },
+  ansiedad: { label: 'Ansiedad', color: PATIENTS_COLORS.ansiedad, areaColor: PATIENTS_COLORS.fondoAnsiedad, icon: 'pulse-outline' },
+  estres: { label: 'Estrés', color: PATIENTS_COLORS.estres, areaColor: PATIENTS_COLORS.fondoEstres, icon: 'flash-outline' },
 };
 
 const PERIOD_LABELS: Record<HabitPeriod, string> = {
@@ -82,7 +90,7 @@ const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 const CHART_Y_AXIS_TEXT_STYLE = {
   fontSize: 8.5,
-  color: '#64748B',
+  color: PATIENTS_COLORS.textoSecundario,
   fontWeight: '600' as const,
 };
 
@@ -373,7 +381,7 @@ const generateChartData = (
 ) => {
   if (!chronologicalRecords.length) return [];
 
-  const baseColor = HABIT_CONFIG[activeChartHabit]?.color || '#1A7A54';
+  const baseColor = HABIT_CONFIG[activeChartHabit]?.color || PATIENTS_COLORS.iconosPerfil;
   const labelModulo = Math.max(1, Math.floor(chronologicalRecords.length / 6));
 
   return chronologicalRecords.map((r, index) => {
@@ -392,9 +400,9 @@ const generateChartData = (
       label: showLabel ? dayLabel : '',
       dataPointText: '',
       dataPointRadius: isSelected ? 12 : 8,
-      dataPointColor: isSelected ? '#0F172A' : baseColor,
+      dataPointColor: isSelected ? PATIENTS_COLORS.textoPrincipal : baseColor,
       showVerticalLine: isSelected,
-      verticalLineColor: '#0F172A40',
+      verticalLineColor: PATIENTS_COLORS.bordeIconos,
       verticalLineThickness: 2,
       verticalLineStrokeDashArray: [4, 4],
       onPress: () => onSelectDay(recDate),
@@ -521,15 +529,15 @@ const AdherenceRing: React.FC<{ percentage: number }> = ({ percentage }) => {
       <Svg width={size} height={size}>
         <Defs>
           <LinearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#1A7A54" />
-            <Stop offset="100%" stopColor="#34D399" />
+            <Stop offset="0%" stopColor={PATIENTS_COLORS.iconosPerfil} />
+            <Stop offset="100%" stopColor={PATIENTS_COLORS.iconosPerfil} />
           </LinearGradient>
         </Defs>
         <Circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#E2E8F0"
+          stroke={PATIENTS_COLORS.bordeIconos}
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -558,14 +566,14 @@ const EmptyReportCard: React.FC<{
 }> = ({ periodText, onOpenFilters }) => (
   <View style={styles.emptyCard}>
     <View style={styles.emptyIconCircle}>
-      <Ionicons name="file-tray-outline" size={36} color="#94A3B8" />
+      <Ionicons name="file-tray-outline" size={36} color={PATIENTS_COLORS.textoSecundario} />
     </View>
     <Text style={styles.emptyTitle}>Sin registros en este período</Text>
     <Text style={styles.emptySubtitle}>
       El paciente no registró check-ins diarios en el rango seleccionado ({periodText}).
     </Text>
     <TouchableOpacity style={styles.emptyActionBtn} onPress={onOpenFilters}>
-      <Ionicons name="calendar" size={16} color="#FFFFFF" />
+      <Ionicons name="calendar" size={16} color={PATIENTS_COLORS.textoBlanco} />
       <Text style={styles.emptyActionBtnText}>Cambiar período de búsqueda</Text>
     </TouchableOpacity>
   </View>
@@ -615,7 +623,7 @@ const ReportKpis: React.FC<ReportKpisProps> = ({ stats, selectedRecord }) => {
           {isSelected ? 'Hora de este día' : 'Hora del registro'}
         </Text>
         <View style={styles.kpiContentCenter}>
-          <Text style={[styles.kpiBigNumber, { color: isSelected ? '#1A7A54' : '#0284C7' }]}>
+          <Text style={[styles.kpiBigNumber, { color: PATIENTS_COLORS.iconosPerfil }]}>
             {timeText}
           </Text>
           <Text style={styles.kpiSublabel}>{timeSublabel}</Text>
@@ -624,7 +632,7 @@ const ReportKpis: React.FC<ReportKpisProps> = ({ stats, selectedRecord }) => {
           <Ionicons
             name={isSelected ? 'radio-button-on' : 'time-outline'}
             size={11}
-            color={isSelected ? '#1A7A54' : '#0284C7'}
+            color={PATIENTS_COLORS.iconosPerfil}
           />
           <Text style={isSelected ? styles.kpiBadgeGreenText : styles.kpiBadgeBlueText}>
             {badgeText}
@@ -642,7 +650,7 @@ const DayDetailCard: React.FC<{ record: MySqlDailyHabitRecord }> = ({ record }) 
     <View style={styles.dayDetailCard}>
       <View style={styles.dayDetailHeader}>
         <View style={styles.dayDetailIconWrap}>
-          <Ionicons name="checkmark-done-circle" size={28} color="#1A7A54" />
+          <Ionicons name="checkmark-done-circle" size={28} color={PATIENTS_COLORS.iconosPerfil} />
         </View>
         <View>
           <Text style={styles.dayDetailTitle}>
@@ -678,21 +686,21 @@ const InspectingBanner: React.FC<{
         onPress={onDeselect}
         activeOpacity={0.7}
       >
-        <Ionicons name="close-circle" size={17} color="#475569" />
+        <Ionicons name="close-circle" size={17} color={PATIENTS_COLORS.textoPrincipal} />
         <Text style={styles.deselectBtnText}>Deseleccionar</Text>
       </TouchableOpacity>
     </View>
 
     <View style={styles.inspectingMainInfo}>
       <View style={styles.inspectingCalendarIconWrap}>
-        <Ionicons name="calendar" size={22} color="#1A7A54" />
+        <Ionicons name="calendar" size={22} color={PATIENTS_COLORS.iconosPerfil} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.inspectingDateText}>
           {formatToChileanDate(record.evaluation_date)}
         </Text>
         <View style={styles.inspectingTimeMetaRow}>
-          <Ionicons name="time" size={13} color="#0284C7" />
+          <Ionicons name="time" size={13} color={PATIENTS_COLORS.iconosPerfil} />
           <Text style={styles.inspectingTimeMetaText}>
             Check-in confirmado a las {formatTimeOnly(record.confirmed_at)} hrs
           </Text>
@@ -701,7 +709,7 @@ const InspectingBanner: React.FC<{
     </View>
 
     <View style={styles.inspectingFooterHint}>
-      <Ionicons name="sparkles" size={13} color="#166534" />
+      <Ionicons name="sparkles" size={13} color={PATIENTS_COLORS.iconosPerfil} />
       <Text style={styles.inspectingFooterHintText}>
         Métricas y desglose inferior enfocados en esta fecha. Pulsa Deseleccionar para volver al promedio.
       </Text>
@@ -918,17 +926,15 @@ export const PatientHabitReportScreen: React.FC<Props> = ({ navigation, route })
       {/* Header Superior */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-          activeOpacity={0.7}
+         
         >
-          <Ionicons name="arrow-back" size={22} color="#1E293B" />
+         
         </TouchableOpacity>
 
         <View style={styles.headerTitleGroup}>
           <Text style={styles.headerTitle}>Informe de Hábitos</Text>
           <Text style={styles.headerSubtitle} numberOfLines={1}>
-            {patient.nombre} {patient.apellido_paterno}
+            {patient.nombre} {patient.apellido_paterno} {patient.apellido_materno}
           </Text>
         </View>
 
@@ -937,7 +943,7 @@ export const PatientHabitReportScreen: React.FC<Props> = ({ navigation, route })
           onPress={() => setShowFilterModal(true)}
           activeOpacity={0.8}
         >
-          <Ionicons name="filter" size={17} color="#1A7A54" />
+          <Ionicons name="filter" size={17} color={PATIENTS_COLORS.iconosPerfil} />
           <Text style={styles.filterBtnText}>Filtros</Text>
         </TouchableOpacity>
       </View>
@@ -945,7 +951,7 @@ export const PatientHabitReportScreen: React.FC<Props> = ({ navigation, route })
       {/* Pill de Rango Activo */}
       <View style={styles.activeFilterBar}>
         <View style={styles.activeFilterPill}>
-          <Ionicons name="calendar-outline" size={14} color="#1A7A54" />
+          <Ionicons name="calendar-outline" size={14} color={PATIENTS_COLORS.iconosPerfil} />
           <Text style={styles.activeFilterPillText}>{periodPillText}</Text>
         </View>
         <Text style={styles.recordsCountText}>
@@ -955,7 +961,7 @@ export const PatientHabitReportScreen: React.FC<Props> = ({ navigation, route })
 
       {loading ? (
         <View style={styles.centerBox}>
-          <ActivityIndicator size="large" color="#1A7A54" />
+          <ActivityIndicator size="large" color={PATIENTS_COLORS.iconosPerfil} />
           <Text style={styles.loadingText}>Procesando métricas clínicas...</Text>
         </View>
       ) : (
@@ -964,7 +970,7 @@ export const PatientHabitReportScreen: React.FC<Props> = ({ navigation, route })
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A7A54']} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PATIENTS_COLORS.iconosPerfil]} />
           }
         >
           {filteredRecords.length === 0 ? (
@@ -1023,7 +1029,7 @@ export const PatientHabitReportScreen: React.FC<Props> = ({ navigation, route })
                             <Text
                               style={[
                                 styles.chartPillText,
-                                isCurSelected && { color: '#FFFFFF', fontWeight: '700' },
+                                isCurSelected && { color: PATIENTS_COLORS.textoBlanco, fontWeight: '700' },
                               ]}
                             >
                               {cfg.label}
@@ -1043,11 +1049,11 @@ export const PatientHabitReportScreen: React.FC<Props> = ({ navigation, route })
                         endSpacing={30}
                         curved
                         areaChart
-                        startFillColor={HABIT_CONFIG[activeChartHabit]?.areaColor || '#E8F5EE'}
-                        endFillColor="#FFFFFF"
+                        startFillColor={HABIT_CONFIG[activeChartHabit]?.areaColor || PATIENTS_COLORS.surfaceGreenSoft}
+                        endFillColor={PATIENTS_COLORS.fondoBase}
                         startOpacity={0.65}
                         endOpacity={0.05}
-                        color={HABIT_CONFIG[activeChartHabit]?.color || '#1A7A54'}
+                        color={HABIT_CONFIG[activeChartHabit]?.color || PATIENTS_COLORS.iconosPerfil}
                         thickness={3}
                         maxValue={5}
                         noOfSections={5}
@@ -1061,16 +1067,16 @@ export const PatientHabitReportScreen: React.FC<Props> = ({ navigation, route })
                         formatYLabel={formatYLabel}
                         yAxisLabelWidth={currentYAxisLabelWidth}
                         yAxisTextStyle={CHART_Y_AXIS_TEXT_STYLE}
-                        xAxisLabelTextStyle={{ fontSize: 9, color: '#64748B' }}
+                        xAxisLabelTextStyle={{ fontSize: 9, color: PATIENTS_COLORS.textoSecundario }}
                         showValuesAsDataPointsText={false}
                         textColor="transparent"
                         textFontSize={0}
-                        dataPointsColor={HABIT_CONFIG[activeChartHabit]?.color || '#1A7A54'}
+                        dataPointsColor={HABIT_CONFIG[activeChartHabit]?.color || PATIENTS_COLORS.iconosPerfil}
                         dataPointsRadius={8}
                         zIndex1={1}
-                        yAxisColor="#E2E8F0"
-                        xAxisColor="#E2E8F0"
-                        rulesColor="#F1F5F9"
+                        yAxisColor={PATIENTS_COLORS.bordeIconos}
+                        xAxisColor={PATIENTS_COLORS.bordeIconos}
+                        rulesColor={PATIENTS_COLORS.fondoiconos}
                         isAnimated={false}
                         animateOnDataChange={false}
                       />
@@ -1088,7 +1094,7 @@ export const PatientHabitReportScreen: React.FC<Props> = ({ navigation, route })
 
               {/* Desglose Individual por Hábito */}
               <View style={styles.sectionHeadingRow}>
-                <Ionicons name="list-circle" size={20} color="#1A7A54" />
+                <Ionicons name="list-circle" size={20} color={PATIENTS_COLORS.iconosPerfil} />
                 <Text style={styles.sectionHeading}>{headingText}</Text>
                 {selectedRecord && (
                   <TouchableOpacity
@@ -1096,7 +1102,7 @@ export const PatientHabitReportScreen: React.FC<Props> = ({ navigation, route })
                     onPress={() => setSelectedRecordDate(null)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="refresh" size={12} color="#1A7A54" />
+                    <Ionicons name="refresh" size={12} color={PATIENTS_COLORS.iconosPerfil} />
                     <Text style={styles.headingResetPillText}>Ver promedios</Text>
                   </TouchableOpacity>
                 )}
@@ -1131,46 +1137,42 @@ export const PatientHabitReportScreen: React.FC<Props> = ({ navigation, route })
   );
 };
 
+// ESTILOS EN INFORME DE HABITOS
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAF9',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    backgroundColor: PATIENTS_COLORS.fondoBase,
+    marginTop: 20,
+    marginBottom: 20,
   },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
+
+
   headerTitleGroup: {
     flex: 1,
   },
+
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '600',
+    color: PATIENTS_COLORS.textoPrincipal,
   },
+
   headerSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: PATIENTS_COLORS.textoSecundario,
     marginTop: 1,
   },
   filterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5EE',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
@@ -1178,25 +1180,23 @@ const styles = StyleSheet.create({
   },
   filterBtnText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#1A7A54',
+    fontWeight: '600',
+    color: PATIENTS_COLORS.iconosPerfil,
   },
   activeFilterBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    paddingVertical: 12,
+    backgroundColor: PATIENTS_COLORS.fondoBase,
   },
   activeFilterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3FAF6',
+    backgroundColor: PATIENTS_COLORS.surfaceGreenSoft,
     borderWidth: 1,
-    borderColor: '#C6E7D6',
+    borderColor: PATIENTS_COLORS.bordeIconos,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
@@ -1205,11 +1205,11 @@ const styles = StyleSheet.create({
   activeFilterPillText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#1A7A54',
+    color: PATIENTS_COLORS.iconosPerfil,
   },
   recordsCountText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: PATIENTS_COLORS.textoSecundario,
     fontWeight: '500',
   },
   container: {
@@ -1228,36 +1228,36 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#64748B',
+    color: PATIENTS_COLORS.textoSecundario,
     fontWeight: '500',
   },
   emptyCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: PATIENTS_COLORS.bordeIconos,
     marginTop: 20,
   },
   emptyIconCircle: {
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: PATIENTS_COLORS.fondoiconos,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontWeight: '600',
+    color: PATIENTS_COLORS.textoPrincipal,
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: PATIENTS_COLORS.textoSecundario,
     textAlign: 'center',
     lineHeight: 18,
     marginBottom: 18,
@@ -1265,14 +1265,14 @@ const styles = StyleSheet.create({
   emptyActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A7A54',
+    backgroundColor: PATIENTS_COLORS.iconosPerfil,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
     gap: 6,
   },
   emptyActionBtnText: {
-    color: '#FFFFFF',
+    color: PATIENTS_COLORS.textoBlanco,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -1283,13 +1283,13 @@ const styles = StyleSheet.create({
   },
   kpiCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     borderRadius: 16,
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
+    borderColor: PATIENTS_COLORS.bordeIconos,
+    shadowColor: PROFILE_COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -1298,7 +1298,7 @@ const styles = StyleSheet.create({
   kpiTitle: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748B',
+    color: PATIENTS_COLORS.textoSecundario,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 6,
@@ -1312,21 +1312,21 @@ const styles = StyleSheet.create({
     position: 'absolute',
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A',
+    color: PATIENTS_COLORS.textoPrincipal,
   },
   kpiBigNumber: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#0F172A',
+    color: PATIENTS_COLORS.textoSecundario,
   },
   kpiSublabel: {
     fontSize: 10,
-    color: '#64748B',
+    color: PATIENTS_COLORS.textoSecundario,
     marginTop: 2,
   },
   kpiBadgeGreen: {
     marginTop: 6,
-    backgroundColor: '#E8F5EE',
+    backgroundColor: PATIENTS_COLORS.fondoiconos,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
@@ -1334,11 +1334,11 @@ const styles = StyleSheet.create({
   kpiBadgeGreenText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#1A7A54',
+    color: PATIENTS_COLORS.iconosPerfil,
   },
   kpiBadgeBlue: {
     marginTop: 6,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: PATIENTS_COLORS.fondoiconos,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
@@ -1349,14 +1349,14 @@ const styles = StyleSheet.create({
   kpiBadgeBlueText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#0284C7',
+    color: PATIENTS_COLORS.iconosPerfil,
   },
   dayDetailCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: PATIENTS_COLORS.bordeIconos,
     marginBottom: 16,
   },
   dayDetailHeader: {
@@ -1368,38 +1368,38 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#E8F5EE',
+    backgroundColor: PATIENTS_COLORS.surfaceGreenSoft,
     justifyContent: 'center',
     alignItems: 'center',
   },
   dayDetailTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: PATIENTS_COLORS.textoSecundario,
   },
   dayDetailSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: PATIENTS_COLORS.textoSecundario,
     marginTop: 2,
   },
   dayDetailDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: PATIENTS_COLORS.fondoiconos,
     marginVertical: 12,
   },
   dayDetailDesc: {
     fontSize: 13,
-    color: '#475569',
+    color: PATIENTS_COLORS.textoPrincipal,
     lineHeight: 18,
   },
   chartCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: PATIENTS_COLORS.bordeIconos,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: PROFILE_COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -1413,12 +1413,12 @@ const styles = StyleSheet.create({
   },
   chartTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontWeight: '600',
+    color: PATIENTS_COLORS.textoPrincipal,
   },
   chartSubtitle: {
     fontSize: 11,
-    color: '#64748B',
+    color: PATIENTS_COLORS.textoSecundario,
     marginTop: 2,
   },
   chartPillsScroll: {
@@ -1429,42 +1429,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  chartPillActive: {
-    backgroundColor: '#1A7A54',
-    borderColor: '#1A7A54',
+    borderColor: PATIENTS_COLORS.bordeIconos,
   },
   chartPillText: {
+    
     fontSize: 11,
     fontWeight: '600',
-    color: '#475569',
-  },
-  chartPillTextActive: {
-    color: '#FFFFFF',
-  },
-  legendRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginVertical: 8,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
-    fontSize: 11,
-    color: '#475569',
-    fontWeight: '500',
+    color: PATIENTS_COLORS.textoPrincipal,
   },
   chartWrapper: {
     marginTop: 8,
@@ -1475,7 +1448,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: PATIENTS_COLORS.fondoiconos,
   },
   daySelectorScroll: {
     gap: 8,
@@ -1486,61 +1459,62 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 10,
-    backgroundColor: '#F8FAF9',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: PATIENTS_COLORS.bordeIconos,
     alignItems: 'center',
     minWidth: 54,
   },
   dayChipSelected: {
-    backgroundColor: '#1A7A54',
-    borderColor: '#1A7A54',
-    shadowColor: '#1A7A54',
+    backgroundColor: PATIENTS_COLORS.fondoClaro,
+    borderColor: PATIENTS_COLORS.iconosPerfil,
+    shadowColor: PATIENTS_COLORS.iconosPerfil,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
-    elevation: 3,
+    
   },
   dayChipDayName: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#64748B',
+    color: PATIENTS_COLORS.textoSecundario,
     textTransform: 'uppercase',
   },
   dayChipDayNameSelected: {
-    color: '#D1FAE5',
+    color: PATIENTS_COLORS.textoSecundario,
     fontWeight: '700',
   },
   dayChipDate: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontWeight: '600',
+    color: PATIENTS_COLORS.textoSecundario,
     marginTop: 1,
   },
   dayChipDateSelected: {
-    color: '#FFFFFF',
+    color: PATIENTS_COLORS.textoSecundario,
   },
   sectionHeadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 12,
+    marginTop: 20,
+    marginBottom: 20,
   },
   sectionHeading: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontWeight: '600',
+    color: PATIENTS_COLORS.textoSecundario,
   },
   habitsCardsList: {
     gap: 10,
     marginBottom: 20,
   },
   habitCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: PATIENTS_COLORS.bordeIconos,
   },
   habitCardTop: {
     flexDirection: 'row',
@@ -1556,12 +1530,12 @@ const styles = StyleSheet.create({
   },
   habitCardName: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontWeight: '600',
+    color: PATIENTS_COLORS.textoPrincipal,
   },
   habitCardSub: {
     fontSize: 11,
-    color: '#64748B',
+    color: PATIENTS_COLORS.textoSecundario,
     marginTop: 1,
   },
   habitScoreGroup: {
@@ -1583,7 +1557,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 6,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: PATIENTS_COLORS.fondoiconos,
     borderRadius: 3,
     marginTop: 10,
     overflow: 'hidden',
@@ -1593,17 +1567,17 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   kpiCardInspecting: {
-    borderColor: '#1A7A54',
+    borderColor: PATIENTS_COLORS.iconosPerfil,
     borderWidth: 1.5,
   },
   inspectingBannerTop: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PATIENTS_COLORS.fondoBase,
     borderRadius: 16,
     padding: 14,
     marginBottom: 14,
     borderWidth: 1.5,
-    borderColor: '#1A7A54',
-    shadowColor: '#1A7A54',
+    borderColor: PATIENTS_COLORS.iconosPerfil,
+    shadowColor: PATIENTS_COLORS.iconosPerfil,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -1619,7 +1593,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: PATIENTS_COLORS.surfaceGreenSoft,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -1628,29 +1602,29 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#16A34A',
+    backgroundColor: PATIENTS_COLORS.iconosPerfil,
   },
   inspectingPillText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#166534',
+    color: PATIENTS_COLORS.iconosPerfil,
     letterSpacing: 0.5,
   },
   deselectBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: PATIENTS_COLORS.fondoiconos,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: PATIENTS_COLORS.bordeIconos,
   },
   deselectBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#334155',
+    color: PATIENTS_COLORS.textoPrincipal,
   },
   inspectingMainInfo: {
     flexDirection: 'row',
@@ -1661,14 +1635,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#E8F5EE',
+    backgroundColor: PATIENTS_COLORS.surfaceGreenSoft,
     justifyContent: 'center',
     alignItems: 'center',
   },
   inspectingDateText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
+    color: PATIENTS_COLORS.textoPrincipal,
   },
   inspectingTimeMetaRow: {
     flexDirection: 'row',
@@ -1678,7 +1652,7 @@ const styles = StyleSheet.create({
   },
   inspectingTimeMetaText: {
     fontSize: 12,
-    color: '#0284C7',
+    color: PATIENTS_COLORS.iconosPerfil,
     fontWeight: '600',
   },
   inspectingFooterHint: {
@@ -1688,11 +1662,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: PATIENTS_COLORS.fondoiconos,
   },
   inspectingFooterHintText: {
     fontSize: 11,
-    color: '#166534',
+    color: PATIENTS_COLORS.iconosPerfil,
     fontWeight: '500',
     flex: 1,
   },
@@ -1700,7 +1674,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#E8F5EE',
+    backgroundColor: PATIENTS_COLORS.surfaceGreenSoft,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -1709,10 +1683,10 @@ const styles = StyleSheet.create({
   headingResetPillText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#1A7A54',
+    color: PATIENTS_COLORS.iconosPerfil,
   },
   habitCardSelectedMode: {
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FCFDFD',
+    borderColor: PATIENTS_COLORS.bordeIconos,
+    backgroundColor: PATIENTS_COLORS.fondoBase,
   },
 });
